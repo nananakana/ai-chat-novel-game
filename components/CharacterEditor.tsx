@@ -16,9 +16,9 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
 }) => {
   const [characters, setCharacters] = useState(() => {
     return settings?.characters || [
-      { id: '1', name: '主人公', alias: ['protagonist', 'default', 'プレイヤー'], image: 'https://placehold.co/800x1200/e0e7ff/1e3a8a?text=Protagonist', isProtagonist: true },
-      { id: '2', name: 'アキラ', alias: ['akira'], image: 'https://placehold.co/800x1200/dbeafe/1e3a8a?text=Akira', isProtagonist: false },
-      { id: '3', name: 'ナレーター', alias: ['narrator', 'ナレーター', '謎の声', '???', 'システム'], image: '', isProtagonist: false }
+      { id: '1', name: '主人公', alias: ['protagonist', 'default', 'プレイヤー'], image: 'https://placehold.co/800x1200/e0e7ff/1e3a8a?text=Protagonist', isProtagonist: true, isDisplayed: false },
+      { id: '2', name: 'アキラ', alias: ['akira'], image: 'https://placehold.co/800x1200/dbeafe/1e3a8a?text=Akira', isProtagonist: false, isDisplayed: true },
+      { id: '3', name: 'ナレーター', alias: ['narrator', 'ナレーター', '謎の声', '???', 'システム'], image: '', isProtagonist: false, isDisplayed: false }
     ];
   });
 
@@ -36,7 +36,8 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
       name: '新しいキャラクター',
       alias: [],
       image: '',
-      isProtagonist: false
+      isProtagonist: false,
+      isDisplayed: false
     };
     setCharacters([...characters, newCharacter]);
   };
@@ -202,27 +203,46 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
               ),
               
               React.createElement('div', {
-                className: 'mt-4 flex items-center'
+                className: 'mt-4 space-y-3'
               },
-                React.createElement('input', {
-                  type: 'checkbox',
-                  id: `protagonist-${character.id}`,
-                  checked: character.isProtagonist,
-                  onChange: e => {
-                    // 主人公は一人だけ
-                    if (e.target.checked) {
-                      setCharacters(chars => chars.map(char => ({
-                        ...char,
-                        isProtagonist: char.id === character.id
-                      })));
-                    }
-                  },
-                  className: 'mr-2'
-                }),
-                React.createElement('label', {
-                  htmlFor: `protagonist-${character.id}`,
-                  className: 'text-sm text-slate-700'
-                }, '主人公として設定する')
+                React.createElement('div', {
+                  className: 'flex items-center'
+                },
+                  React.createElement('input', {
+                    type: 'checkbox',
+                    id: `protagonist-${character.id}`,
+                    checked: character.isProtagonist,
+                    onChange: e => {
+                      // 主人公は一人だけ
+                      if (e.target.checked) {
+                        setCharacters(chars => chars.map(char => ({
+                          ...char,
+                          isProtagonist: char.id === character.id
+                        })));
+                      }
+                    },
+                    className: 'mr-2'
+                  }),
+                  React.createElement('label', {
+                    htmlFor: `protagonist-${character.id}`,
+                    className: 'text-sm text-slate-700'
+                  }, '主人公として設定する')
+                ),
+                React.createElement('div', {
+                  className: 'flex items-center'
+                },
+                  React.createElement('input', {
+                    type: 'checkbox',
+                    id: `displayed-${character.id}`,
+                    checked: character.isDisplayed || false,
+                    onChange: e => updateCharacter(character.id, 'isDisplayed', e.target.checked),
+                    className: 'mr-2'
+                  }),
+                  React.createElement('label', {
+                    htmlFor: `displayed-${character.id}`,
+                    className: 'text-sm text-slate-700'
+                  }, 'このキャラクターを画面に表示する')
+                )
               )
             )
           )

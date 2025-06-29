@@ -162,19 +162,33 @@ const createGamePrompt = (history, settings) => {
   const recentMessages = history.slice(-10); // 直近10メッセージ
   const conversationText = recentMessages.map(m => `${m.speaker}: ${m.text}`).join('\n');
   
+  // 登場キャラクター一覧を作成
+  const characterList = settings.characters 
+    ? settings.characters.map(char => `- ${char.name} (別名: ${char.alias?.join(', ') || 'なし'})`).join('\n')
+    : '- 主人公\n- ナレーター';
+  
   return `あなたは卓越したインタラクティブノベルの語り手（ゲームマスター）です。プレイヤーの行動にリアルタイムで応答し、物語を生成してください。
 
 ### 世界観
 ${settings.worldPrompt || 'シンプルなファンタジー世界'}
 
+### 登場キャラクター
+${characterList}
+
 ### 直近の会話
 ${conversationText}
+
+### 特別な指示
+- キャラクターを登場させる場合は、eventフィールドに "show_character:キャラクター名" を設定してください
+- キャラクターを退場させる場合は、eventフィールドに "hide_character:キャラクター名" を設定してください
+- 背景を変更する場合は、eventフィールドに "change_background:背景の説明" を設定してください
 
 ### 出力形式
 以下のJSON形式で物語の続きを出力してください：
 {"speaker": "話者名", "text": "生成したセリフや状況説明", "event": "イベント名またはnull"}
 
-例: {"speaker": "ナレーター", "text": "目の前には巨大な扉が立ちはだかっている。", "event": null}`;
+例: {"speaker": "ナレーター", "text": "目の前には巨大な扉が立ちはだかっている。", "event": null}
+例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": "show_character:アキラ"}`;
 };
 
 // AIレスポンスパーサー
@@ -296,23 +310,66 @@ export const useGameLogic = () => {
     dispatch({ type: 'UPDATE_SETTINGS', payload: newSettings });
   };
 
-  const saveGame = () => {
-    dispatch({ type: 'SAVE_GAME' });
-    alert('ゲームを保存しました。');
+  const saveGame = (slotNumber = 0) => {
+    const saveData = {
+      ...state,
+      savedAt: new Date().toISOString(),
+      slotNumber
+    };
+    const saveKey = `aiChatNovelGameSave_slot${slotNumber}`;
+    
+    try {
+      localStorage.setItem(saveKey, JSON.stringify(saveData));
+      
+      // セーブスロット一覧を更新
+      const existingSaves = JSON.parse(localStorage.getItem('aiChatNovelGameSaveList') || '{}');
+      existingSaves[slotNumber] = {
+        savedAt: saveData.savedAt,
+        messageCount: state.messages.length,
+        lastMessage: state.messages[state.messages.length - 1]?.text?.substring(0, 50) + '...'
+      };
+      localStorage.setItem('aiChatNovelGameSaveList', JSON.stringify(existingSaves));
+      
+      alert(`スロット${slotNumber + 1}にゲームを保存しました。`);
+    } catch (e) {
+      alert('セーブに失敗しました。');
+    }
   };
 
-  const loadGame = () => {
-    const savedData = localStorage.getItem('aiChatNovelGameSave');
+  const loadGame = (slotNumber = 0) => {
+    const saveKey = `aiChatNovelGameSave_slot${slotNumber}`;
+    const savedData = localStorage.getItem(saveKey);
+    
     if (savedData) {
       try {
-        dispatch({ type: 'LOAD_GAME', payload: JSON.parse(savedData) });
-        alert('ゲームをロードしました。');
+        const parsedData = JSON.parse(savedData);
+        dispatch({ type: 'LOAD_GAME', payload: parsedData });
+        alert(`スロット${slotNumber + 1}からゲームをロードしました。`);
       } catch (e) {
         alert('セーブデータの読み込みに失敗しました。');
       }
     } else {
-      alert('セーブデータが見つかりません。');
+      alert(`スロット${slotNumber + 1}にセーブデータが見つかりません。`);
     }
+  };
+
+  const getSaveList = () => {
+    try {
+      return JSON.parse(localStorage.getItem('aiChatNovelGameSaveList') || '{}');
+    } catch (e) {
+      return {};
+    }
+  };
+
+  const deleteSave = (slotNumber) => {
+    const saveKey = `aiChatNovelGameSave_slot${slotNumber}`;
+    localStorage.removeItem(saveKey);
+    
+    const existingSaves = JSON.parse(localStorage.getItem('aiChatNovelGameSaveList') || '{}');
+    delete existingSaves[slotNumber];
+    localStorage.setItem('aiChatNovelGameSaveList', JSON.stringify(existingSaves));
+    
+    alert(`スロット${slotNumber + 1}のセーブデータを削除しました。`);
   };
 
   return { 
@@ -321,6 +378,8 @@ export const useGameLogic = () => {
     handleRetry, 
     updateSettings, 
     saveGame, 
-    loadGame 
+    loadGame,
+    getSaveList,
+    deleteSave
   };
 };

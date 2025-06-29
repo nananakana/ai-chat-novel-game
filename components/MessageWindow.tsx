@@ -45,18 +45,22 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({
     React.createElement('div', {
       className: 'h-64 mx-auto max-w-4xl bg-white/80 border-2 border-slate-200 rounded-t-lg backdrop-blur-md relative'
     },
-      React.createElement('div', { className: 'relative h-full p-8' },
+      React.createElement('div', { className: 'relative h-full' },
         message.speaker && React.createElement('div', { 
           className: 'absolute top-0 left-0 -mt-5 ml-12 px-4 py-1 bg-white border-2 border-slate-200 rounded-t-lg text-lg font-bold text-slate-700' 
         }, message.speaker),
         showRetry && React.createElement('button', { 
           onClick: onRetry, 
           title: 'やり直し', 
-          className: 'absolute top-2 right-2 p-2 text-slate-500 hover:text-sky-500 rounded-full' 
+          className: 'absolute top-2 right-2 p-2 text-slate-500 hover:text-sky-500 rounded-full z-10' 
         }, '🔄'),
-        React.createElement('p', { 
-          className: 'text-xl text-slate-800 leading-relaxed whitespace-pre-wrap' 
-        }, displayedText || '')
+        React.createElement('div', {
+          className: 'h-full p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100'
+        },
+          React.createElement('p', { 
+            className: 'text-xl text-slate-800 leading-relaxed whitespace-pre-wrap min-h-full' 
+          }, displayedText || '')
+        )
       )
     )
   );
