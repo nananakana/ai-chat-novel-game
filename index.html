@@ -15,6 +15,7 @@
               'fade-in': 'fadeIn 0.5s ease-in-out',
               'slide-in-bottom': 'slideInBottom 0.5s ease-in-out',
               'dot-pulse': 'dotPulse 1.4s infinite ease-in-out',
+              'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             },
             keyframes: {
               fadeIn: {
@@ -40,12 +41,32 @@
     "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
     "react/": "https://esm.sh/react@^19.1.0/",
     "react": "https://esm.sh/react@^19.1.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.7.0"
+    "@google/genai": "https://esm.sh/@google/genai@^1.7.0",
+    "openai": "https://esm.sh/openai@^4.29.2"
   }
 }
 </script>
+
+  <!-- 外部ライブラリのプリロード -->
+  <script>
+    // OpenAIライブラリのグローバル設定
+    window.OpenAIConfig = {
+      loaded: false,
+      error: null
+    };
+    
+    // Google Generative AIライブラリのグローバル設定
+    window.GoogleAIConfig = {
+      loaded: false,
+      error: null
+    };
+    
+    // ライブラリ読み込み状態を表示
+    console.log('%c🤖 AI Chat Novel Game', 'color: #0ea5e9; font-size: 16px; font-weight: bold;');
+    console.log('📦 外部ライブラリ読み込み中...');
+  </script>
 </head>
-  <body class="bg-slate-50 text-slate-800 antialiased">
+  <body class="bg-slate-50 text-slate-800 antialiased overflow-hidden">
     <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
