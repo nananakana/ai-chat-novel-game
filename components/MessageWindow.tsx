@@ -1,6 +1,15 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 
+// ナレーター判定関数
+const isNarrator = (speaker) => {
+  if (!speaker) return false;
+  const narratorAliases = ['ナレーター', 'narrator', '謎の声', '???', 'システム', 'system'];
+  return narratorAliases.some(alias => 
+    speaker.toLowerCase().includes(alias.toLowerCase())
+  );
+};
+
 interface MessageWindowProps {
   message: any;
   isLoading: boolean;
@@ -46,7 +55,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({
       className: 'h-64 mx-auto max-w-4xl bg-white/80 border-2 border-slate-200 rounded-t-lg backdrop-blur-md relative'
     },
       React.createElement('div', { className: 'relative h-full' },
-        message.speaker && React.createElement('div', { 
+        message.speaker && !isNarrator(message.speaker) && React.createElement('div', { 
           className: 'absolute top-0 left-0 -mt-5 ml-12 px-4 py-1 bg-white border-2 border-slate-200 rounded-t-lg text-lg font-bold text-slate-700' 
         }, message.speaker),
         showRetry && React.createElement('button', { 

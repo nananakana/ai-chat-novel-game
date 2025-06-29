@@ -8,6 +8,8 @@ interface SettingsPanelProps {
   onSettingsChange: (newSettings: any) => void;
   onEditCharacters: () => void;
   onEditWorld: () => void;
+  onEditSystemPrompt: () => void;
+  onEditBackgrounds: () => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
@@ -16,7 +18,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   settings, 
   onSettingsChange,
   onEditCharacters,
-  onEditWorld
+  onEditWorld,
+  onEditSystemPrompt,
+  onEditBackgrounds
 }) => {
   if (!isOpen) return null;
 
@@ -52,11 +56,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             React.createElement('button', {
               onClick: onEditWorld,
               className: 'p-3 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 text-left'
-            }, '世界観の編集'),
+            }, '🌍 世界観の編集'),
             React.createElement('button', {
               onClick: onEditCharacters,
               className: 'p-3 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 text-left'
-            }, 'キャラクターの編集')
+            }, '👥 キャラクターの編集'),
+            React.createElement('button', {
+              onClick: onEditSystemPrompt,
+              className: 'p-3 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 text-left'
+            }, '🤖 システムプロンプト編集'),
+            React.createElement('button', {
+              onClick: onEditBackgrounds,
+              className: 'p-3 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 text-left'
+            }, '🌅 背景の編集')
           )
         ),
         React.createElement('div', null,

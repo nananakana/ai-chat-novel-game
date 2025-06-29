@@ -10,6 +10,8 @@ import { GalleryPanel } from './components/GalleryPanel';
 import { WorldEditor } from './components/WorldEditor';
 import { CharacterEditor } from './components/CharacterEditor';
 import { SaveLoadPanel } from './components/SaveLoadPanel';
+import { SystemPromptEditor } from './components/SystemPromptEditor';
+import { BackgroundEditor } from './components/BackgroundEditor';
 import { assetManager } from './services/assetManager';
 
 const App = () => {
@@ -21,6 +23,8 @@ const App = () => {
   const [isCharacterEditorOpen, setCharacterEditorOpen] = useState(false);
   const [isSaveLoadOpen, setSaveLoadOpen] = useState(false);
   const [saveLoadMode, setSaveLoadMode] = useState('save');
+  const [isSystemPromptEditorOpen, setSystemPromptEditorOpen] = useState(false);
+  const [isBackgroundEditorOpen, setBackgroundEditorOpen] = useState(false);
   const [isWindowVisible, setWindowVisible] = useState(true);
   const [background, setBackground] = useState('https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=2070&auto=format&fit=crop');
   const [visibleCharacters, setVisibleCharacters] = useState([]);
@@ -82,9 +86,9 @@ const App = () => {
     }),
     React.createElement('div', { className: 'absolute inset-0 bg-white bg-opacity-10' }),
     
-    // キャラクターレイヤー（動的ポジション対応）
+    // キャラクターレイヤー（動的ポジション対応・最適サイジング）
     activeCharacters.length > 0 && React.createElement('div', {
-      className: 'absolute bottom-0 left-0 right-0 h-[90%] flex items-end justify-center transition-all duration-500'
+      className: 'absolute bottom-0 left-0 right-0 h-[85%] flex items-end justify-center transition-all duration-500'
     },
       activeCharacters.map((character, index) => {
         const totalChars = activeCharacters.length;
@@ -107,7 +111,7 @@ const App = () => {
           React.createElement('img', {
             src: character.image,
             alt: character.name,
-            className: 'h-full max-w-[300px] object-contain drop-shadow-2xl transition-opacity duration-500',
+            className: 'h-full w-auto object-contain drop-shadow-2xl transition-opacity duration-500',
             onError: (e) => {
               console.warn('Character image failed to load:', character.image);
               e.target.style.display = 'none';
@@ -162,7 +166,9 @@ const App = () => {
       settings: state.settings,
       onSettingsChange: updateSettings,
       onEditCharacters: () => setCharacterEditorOpen(true),
-      onEditWorld: () => setWorldEditorOpen(true)
+      onEditWorld: () => setWorldEditorOpen(true),
+      onEditSystemPrompt: () => setSystemPromptEditorOpen(true),
+      onEditBackgrounds: () => setBackgroundEditorOpen(true)
     }),
     React.createElement(BacklogPanel, { 
       isOpen: isBacklogOpen,
@@ -200,6 +206,18 @@ const App = () => {
       },
       getSaveList,
       onDeleteSave: deleteSave
+    }),
+    React.createElement(SystemPromptEditor, {
+      isOpen: isSystemPromptEditorOpen,
+      onClose: () => setSystemPromptEditorOpen(false),
+      settings: state.settings,
+      onSettingsChange: updateSettings
+    }),
+    React.createElement(BackgroundEditor, {
+      isOpen: isBackgroundEditorOpen,
+      onClose: () => setBackgroundEditorOpen(false),
+      settings: state.settings,
+      onSettingsChange: updateSettings
     })
   );
 };

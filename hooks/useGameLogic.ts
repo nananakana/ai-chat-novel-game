@@ -167,6 +167,15 @@ const createGamePrompt = (history, settings) => {
     ? settings.characters.map(char => `- ${char.name} (別名: ${char.alias?.join(', ') || 'なし'})`).join('\n')
     : '- 主人公\n- ナレーター';
   
+  // カスタムプロンプトテンプレートが設定されている場合はそれを使用
+  if (settings.systemPromptTemplate) {
+    return settings.systemPromptTemplate
+      .replace('{worldPrompt}', settings.worldPrompt || 'シンプルなファンタジー世界')
+      .replace('{characterList}', characterList)
+      .replace('{conversationText}', conversationText);
+  }
+  
+  // デフォルトプロンプト
   return `あなたは卓越したインタラクティブノベルの語り手（ゲームマスター）です。プレイヤーの行動にリアルタイムで応答し、物語を生成してください。
 
 ### 世界観

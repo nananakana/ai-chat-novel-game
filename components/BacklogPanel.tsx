@@ -30,7 +30,7 @@ export const BacklogPanel: React.FC<BacklogPanelProps> = ({ isOpen, onClose, mes
         }, '✕')
       ),
       React.createElement('div', {
-        className: 'flex-grow overflow-y-auto p-6'
+        className: 'flex-grow overflow-y-auto p-6 select-text'
       },
         messages.map(msg => 
           React.createElement('div', { 
@@ -38,10 +38,10 @@ export const BacklogPanel: React.FC<BacklogPanelProps> = ({ isOpen, onClose, mes
             className: 'mb-4' 
           }, 
             React.createElement('p', { 
-              className: 'font-bold text-lg text-slate-700' 
+              className: 'font-bold text-lg text-slate-700 select-text' 
             }, msg.speaker || (msg.role === 'user' ? 'プレイヤー' : 'システム')),
             React.createElement('p', { 
-              className: 'whitespace-pre-wrap text-slate-600' 
+              className: 'whitespace-pre-wrap text-slate-600 select-text' 
             }, msg.text)
           )
         )

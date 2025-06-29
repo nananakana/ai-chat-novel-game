@@ -17,8 +17,7 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
   const [characters, setCharacters] = useState(() => {
     return settings?.characters || [
       { id: '1', name: '主人公', alias: ['protagonist', 'default', 'プレイヤー'], image: 'https://placehold.co/800x1200/e0e7ff/1e3a8a?text=Protagonist', isProtagonist: true, isDisplayed: false },
-      { id: '2', name: 'アキラ', alias: ['akira'], image: 'https://placehold.co/800x1200/dbeafe/1e3a8a?text=Akira', isProtagonist: false, isDisplayed: true },
-      { id: '3', name: 'ナレーター', alias: ['narrator', 'ナレーター', '謎の声', '???', 'システム'], image: '', isProtagonist: false, isDisplayed: false }
+      { id: '2', name: 'アキラ', alias: ['akira'], image: 'https://placehold.co/800x1200/dbeafe/1e3a8a?text=Akira', isProtagonist: false, isDisplayed: true }
     ];
   });
 
@@ -92,15 +91,34 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
         className: 'p-6 overflow-y-auto flex-1'
       },
         React.createElement('div', {
-          className: 'mb-4 flex justify-between items-center'
+          className: 'mb-4'
         },
-          React.createElement('p', {
-            className: 'text-sm text-slate-600'
-          }, 'ゲームに登場するキャラクターを管理できます。'),
-          React.createElement('button', {
-            onClick: addCharacter,
-            className: 'px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600'
-          }, '+ キャラクター追加')
+          React.createElement('div', {
+            className: 'flex justify-between items-center mb-3'
+          },
+            React.createElement('p', {
+              className: 'text-sm text-slate-600'
+            }, 'ゲームに登場するキャラクターを管理できます。'),
+            React.createElement('button', {
+              onClick: addCharacter,
+              className: 'px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600'
+            }, '+ キャラクター追加')
+          ),
+          React.createElement('div', {
+            className: 'bg-blue-50 border border-blue-200 rounded-lg p-3'
+          },
+            React.createElement('h4', {
+              className: 'text-sm font-medium text-blue-800 mb-2'
+            }, '📋 推奨画像仕様'),
+            React.createElement('ul', {
+              className: 'text-xs text-blue-700 space-y-1'
+            },
+              React.createElement('li', null, '• 推奨サイズ: 縦1200px × 横800px程度の縦長画像'),
+              React.createElement('li', null, '• ファイル形式: PNG, JPG, WebP'),
+              React.createElement('li', null, '• 背景透過推奨（PNG形式）'),
+              React.createElement('li', null, '• 高解像度推奨（画面に大きく表示されます）')
+            )
+          )
         ),
         
         React.createElement('div', {

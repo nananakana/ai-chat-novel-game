@@ -7,8 +7,7 @@ const DEFAULT_WORLD_PROMPT = `- ジャンル: SFファンタジー
 
 const DEFAULT_CHARACTERS = [
     { id: '1', name: '主人公', alias: ['protagonist', 'default', 'プレイヤー'], image: 'https://placehold.co/800x1200/e0e7ff/1e3a8a?text=Protagonist', isProtagonist: true, isDisplayed: false },
-    { id: '2', name: 'アキラ', alias: ['akira'], image: 'https://placehold.co/800x1200/dbeafe/1e3a8a?text=Akira', isProtagonist: false, isDisplayed: true },
-    { id: '3', name: 'ナレーター', alias: ['narrator', 'ナレーター', '謎の声', '???', 'システム'], image: '', isProtagonist: false, isDisplayed: false }
+    { id: '2', name: 'アキラ', alias: ['akira'], image: 'https://placehold.co/800x1200/dbeafe/1e3a8a?text=Akira', isProtagonist: false, isDisplayed: true }
 ];
 
 const SYSTEM_PROMPT_TEMPLATE = `あなたは卓越したインタラクティブノベルの語り手（ゲームマスター）です。プレイヤーの行動にリアルタイムで応答し、物語を生成してください。
