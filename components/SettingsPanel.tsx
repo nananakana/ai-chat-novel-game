@@ -1,18 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { GameSettings } from '../types';
+import { GameSettings, CustomWorldSetting, CustomCharacter } from '../types';
 import { costService } from '../services/costService';
 import { LIGHT_THEME_COLORS } from '../constants';
+import { WorldEditor } from './WorldEditor';
+import { CharacterEditor } from './CharacterEditor';
 
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   settings: GameSettings;
   onSettingsChange: (newSettings: Partial<GameSettings>) => void;
+  customWorldSetting?: CustomWorldSetting;
+  customCharacters: CustomCharacter[];
+  onWorldSettingChange: (setting: CustomWorldSetting) => void;
+  onCharactersChange: (characters: CustomCharacter[]) => void;
 }
 
-export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, settings, onSettingsChange }) => {
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
+  isOpen, 
+  onClose, 
+  settings, 
+  onSettingsChange,
+  customWorldSetting,
+  customCharacters,
+  onWorldSettingChange,
+  onCharactersChange
+}) => {
   const [monthlyLimit, setMonthlyLimit] = useState(50);
   const [costStats, setCostStats] = useState({ currentCost: 0, limit: 50 });
+  const [isWorldEditorOpen, setWorldEditorOpen] = useState(false);
+  const [isCharacterEditorOpen, setCharacterEditorOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -54,6 +71,42 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, s
         <h2 id="settings-title" className={`text-2xl font-bold mb-6 ${LIGHT_THEME_COLORS.text.primary}`}>設定</h2>
         
         <div className="space-y-6">
+          {/* クリエイター機能セクション */}
+          <div className={`border-b ${LIGHT_THEME_COLORS.border.primary} pb-6`}>
+            <h3 className={`text-lg font-semibold mb-4 ${LIGHT_THEME_COLORS.text.primary}`}>クリエイター機能</h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => setWorldEditorOpen(true)}
+                className={`w-full p-3 ${LIGHT_THEME_COLORS.background.secondary} ${LIGHT_THEME_COLORS.button.secondary.hover} ${LIGHT_THEME_COLORS.text.primary} rounded-md transition-colors flex items-center justify-between`}
+              >
+                <div className="text-left">
+                  <div className="font-medium">世界観の編集</div>
+                  <div className={`text-sm ${LIGHT_THEME_COLORS.text.secondary}`}>
+                    {customWorldSetting?.title || "デフォルト設定"}
+                  </div>
+                </div>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => setCharacterEditorOpen(true)}
+                className={`w-full p-3 ${LIGHT_THEME_COLORS.background.secondary} ${LIGHT_THEME_COLORS.button.secondary.hover} ${LIGHT_THEME_COLORS.text.primary} rounded-md transition-colors flex items-center justify-between`}
+              >
+                <div className="text-left">
+                  <div className="font-medium">キャラクターの編集</div>
+                  <div className={`text-sm ${LIGHT_THEME_COLORS.text.secondary}`}>
+                    {customCharacters.length}体のキャラクター
+                  </div>
+                </div>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
           <div>
             <label htmlFor="aiModel" className={`block text-sm font-medium ${LIGHT_THEME_COLORS.text.secondary} mb-1`}>AIモデル</label>
             <select
@@ -177,6 +230,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, s
           閉じる
         </button>
       </div>
+
+      {/* エディタモーダル */}
+      <WorldEditor
+        isOpen={isWorldEditorOpen}
+        onClose={() => setWorldEditorOpen(false)}
+        worldSetting={customWorldSetting}
+        onSave={onWorldSettingChange}
+      />
+      
+      <CharacterEditor
+        isOpen={isCharacterEditorOpen}
+        onClose={() => setCharacterEditorOpen(false)}
+        characters={customCharacters}
+        onSave={onCharactersChange}
+      />
     </div>
   );
 };

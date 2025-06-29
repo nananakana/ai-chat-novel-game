@@ -1,7 +1,7 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import OpenAI from 'openai';
-import { GameSettings, ChatMessage, AiModel } from '../types';
-import { SYSTEM_PROMPT_TEMPLATE, SHORT_TERM_MEMORY_TURNS } from '../constants';
+import { GameSettings, ChatMessage, AiModel, CustomWorldSetting, CustomCharacter } from '../types';
+import { SYSTEM_PROMPT_TEMPLATE, SHORT_TERM_MEMORY_TURNS, generateSystemPrompt } from '../constants';
 import { memoryService } from './memoryService';
 import { costService } from './costService';
 
@@ -63,7 +63,9 @@ export const generateResponse = async (
     history: ChatMessage[],
     longTermMemory: string,
     settings: GameSettings,
-    forcedPrompt?: string | null
+    forcedPrompt?: string | null,
+    customWorldSetting?: CustomWorldSetting,
+    customCharacters?: CustomCharacter[]
   ): Promise<{ message: ChatMessage; cost: number }> => {
 
     if (settings.aiModel === 'dummy') {
@@ -111,11 +113,21 @@ export const generateResponse = async (
         ? `【重要】以下の指示に従って物語を進行してください：\n${forcedPrompt}`
         : 'なし（通常の物語進行）';
 
-    const prompt = SYSTEM_PROMPT_TEMPLATE
-        .replace('{longTermMemory}', combinedLongTermMemory)
-        .replace('{shortTermMemory}', shortTermMemoryText)
-        .replace('{forcedPrompt}', scenarioPromptText)
-        .replace('{playerInput}', playerInput);
+    // カスタム設定がある場合は動的プロンプト生成、なければレガシーテンプレート使用
+    const prompt = customWorldSetting || (customCharacters && customCharacters.length > 0)
+        ? generateSystemPrompt(
+            combinedLongTermMemory,
+            shortTermMemoryText,
+            scenarioPromptText,
+            playerInput,
+            customWorldSetting,
+            customCharacters
+          )
+        : SYSTEM_PROMPT_TEMPLATE
+            .replace('{longTermMemory}', combinedLongTermMemory)
+            .replace('{shortTermMemory}', shortTermMemoryText)
+            .replace('{forcedPrompt}', scenarioPromptText)
+            .replace('{playerInput}', playerInput);
 
     // 月次上限チェック
     const limitWarning = costService.getMonthlyLimitWarning();

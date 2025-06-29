@@ -5,17 +5,32 @@ import { MessageWindow } from './components/MessageWindow';
 import { InputBar } from './components/InputBar';
 import { SettingsPanel } from './components/SettingsPanel';
 import { BacklogPanel } from './components/BacklogPanel';
+import { GalleryPanel } from './components/GalleryPanel';
 import { scenarioService } from './services/scenarioService';
 import { assetManager } from './services/assetManager';
 import { LIGHT_THEME_COLORS } from './constants';
 
 
 export default function App() {
-  const { state, handleSendMessage, handleRetry, updateSettings, saveGame, loadGame } = useGameLogic();
+  const { 
+    state, 
+    handleSendMessage, 
+    handleRetry, 
+    updateSettings, 
+    updateWorldSetting,
+    updateCharacters,
+    saveGame, 
+    loadGame 
+  } = useGameLogic();
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [isBacklogOpen, setBacklogOpen] = useState(false);
+  const [isGalleryOpen, setGalleryOpen] = useState(false);
+  const [isMessageVisible, setMessageVisible] = useState(true);
   const [background, setBackground] = useState(assetManager.getDefaultBackground());
   const [characterImage, setCharacterImage] = useState(assetManager.getDefaultCharacter());
+  
+  // 主人公キャラクターを取得
+  const protagonistCharacter = state.customCharacters.find(char => char.isProtagonist);
 
   // 表示する最新のメッセージを取得
   const lastMessage = state.messages[state.messages.length - 1];
@@ -91,6 +106,20 @@ export default function App() {
             key={characterImage}
           />
       </div>
+
+      {/* 常時表示主人公キャラクター */}
+      {protagonistCharacter && (
+        <div className="absolute bottom-0 right-8 h-4/6 w-1/4 flex items-end justify-center">
+          <img 
+            src={protagonistCharacter.imageUrl}
+            alt={protagonistCharacter.name}
+            className="h-full object-contain drop-shadow-lg opacity-80"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://placehold.co/400x600/f3f4f6/9ca3af?text=主人公';
+            }}
+          />
+        </div>
+      )}
       
       {/* UIレイヤー */}
       <div className="absolute inset-0 flex flex-col">
@@ -101,6 +130,7 @@ export default function App() {
           onSaveClick={saveGame}
           onLoadClick={loadGame}
           onBacklogClick={() => setBacklogOpen(true)}
+          onGalleryClick={() => setGalleryOpen(true)}
           isSummarizing={state.isSummarizing}
           isMemoryInitializing={state.isMemoryInitializing}
           error={state.error}
@@ -111,7 +141,13 @@ export default function App() {
         {/* 下部UIエリア */}
         <footer className="relative z-10">
             <div className={`h-64 mx-auto max-w-4xl ${LIGHT_THEME_COLORS.background.panel} bg-opacity-90 border-2 ${LIGHT_THEME_COLORS.border.primary} rounded-t-lg backdrop-blur-sm shadow-lg`}>
-                <MessageWindow message={lastMessage} isLoading={state.isLoading} onRetry={handleRetry} />
+                <MessageWindow 
+                  message={lastMessage} 
+                  isLoading={state.isLoading} 
+                  onRetry={handleRetry}
+                  isVisible={isMessageVisible}
+                  onToggleVisibility={() => setMessageVisible(!isMessageVisible)}
+                />
             </div>
             <div className="mx-auto max-w-4xl">
                  <InputBar onSend={handleSendMessage} isLoading={state.isLoading} />
@@ -125,6 +161,10 @@ export default function App() {
         onClose={() => setSettingsOpen(false)} 
         settings={state.settings}
         onSettingsChange={updateSettings}
+        customWorldSetting={state.customWorldSetting}
+        customCharacters={state.customCharacters}
+        onWorldSettingChange={updateWorldSetting}
+        onCharactersChange={updateCharacters}
       />
 
       {/* バックログパネル */}
@@ -132,6 +172,13 @@ export default function App() {
         isOpen={isBacklogOpen}
         onClose={() => setBacklogOpen(false)}
         messages={state.messages}
+      />
+
+      {/* ギャラリーパネル */}
+      <GalleryPanel 
+        isOpen={isGalleryOpen}
+        onClose={() => setGalleryOpen(false)}
+        galleryItems={state.galleryItems}
       />
     </div>
   );

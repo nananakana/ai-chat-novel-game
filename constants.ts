@@ -135,7 +135,7 @@ export const INITIAL_STATE: GameState = {
       imageUrl: 'https://placehold.co/800x1200/ffffff/1a1a2e?text=Akira',
     },
   ],
-  unlockedGalleryItems: [],
+  galleryItems: [],
 };
 
 export const SHORT_TERM_MEMORY_TURNS = 5; // 短期記憶として保持する対話の数

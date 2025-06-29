@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useCallback } from 'react';
-import { GameState, ChatMessage, GameSettings } from '../types';
+import { GameState, ChatMessage, GameSettings, CustomWorldSetting, CustomCharacter } from '../types';
 import { INITIAL_STATE, LONG_TERM_MEMORY_UPDATE_INTERVAL } from '../constants';
 import { generateResponse, summarizeHistory } from '../services/aiAdapter';
 import { memoryService } from '../services/memoryService';
@@ -20,7 +20,9 @@ type Action =
   | { type: 'RETRY_LAST_RESPONSE' }
   | { type: 'SAVE_GAME' }
   | { type: 'LOAD_GAME'; payload: GameState }
-  | { type: 'CLEAR_ERROR' };
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'UPDATE_WORLD_SETTING'; payload: CustomWorldSetting }
+  | { type: 'UPDATE_CHARACTERS'; payload: CustomCharacter[] };
 
 // ゲーム状態を管理するReducer
 const gameReducer = (state: GameState, action: Action): GameState => {
@@ -66,6 +68,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return { ...action.payload, error: null }; // ロード時にエラーをリセット
     case 'CLEAR_ERROR':
         return { ...state, error: null };
+    case 'UPDATE_WORLD_SETTING':
+        return { ...state, customWorldSetting: action.payload };
+    case 'UPDATE_CHARACTERS':
+        return { ...state, customCharacters: action.payload };
     default:
       return state;
   }
@@ -164,7 +170,9 @@ export const useGameLogic = () => {
         [...state.messages, userMessage],
         state.longTermMemory,
         state.settings,
-        state.pendingScenarioPrompt // シナリオプロンプトを渡す
+        state.pendingScenarioPrompt, // シナリオプロンプトを渡す
+        state.customWorldSetting,
+        state.customCharacters
       );
       dispatch({ type: 'RECEIVE_RESPONSE_SUCCESS', payload: { message, cost } });
       
@@ -187,6 +195,14 @@ export const useGameLogic = () => {
   
   const updateSettings = (newSettings: Partial<GameSettings>) => {
     dispatch({ type: 'UPDATE_SETTINGS', payload: newSettings });
+  };
+
+  const updateWorldSetting = (setting: CustomWorldSetting) => {
+    dispatch({ type: 'UPDATE_WORLD_SETTING', payload: setting });
+  };
+
+  const updateCharacters = (characters: CustomCharacter[]) => {
+    dispatch({ type: 'UPDATE_CHARACTERS', payload: characters });
   };
 
   const saveGame = async () => {
@@ -251,7 +267,9 @@ export const useGameLogic = () => {
         messagesWithoutLast,
         state.longTermMemory,
         state.settings,
-        state.pendingScenarioPrompt
+        state.pendingScenarioPrompt,
+        state.customWorldSetting,
+        state.customCharacters
       );
       dispatch({ type: 'RECEIVE_RESPONSE_SUCCESS', payload: { message, cost } });
 
@@ -272,5 +290,14 @@ export const useGameLogic = () => {
     }
   }, [state.isLoading, state.messages, state.longTermMemory, state.settings, state.pendingScenarioPrompt]);
 
-  return { state, handleSendMessage, handleRetry, updateSettings, saveGame, loadGame };
+  return { 
+    state, 
+    handleSendMessage, 
+    handleRetry, 
+    updateSettings, 
+    updateWorldSetting,
+    updateCharacters,
+    saveGame, 
+    loadGame 
+  };
 };

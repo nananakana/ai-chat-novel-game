@@ -48,7 +48,7 @@ export interface GameState {
   // エディタ機能用の状態
   customWorldSetting?: CustomWorldSetting;
   customCharacters: CustomCharacter[];
-  unlockedGalleryItems: GalleryItem[];
+  galleryItems: GalleryItem[];
 }
 
 // ギャラリー関連の型定義
