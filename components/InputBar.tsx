@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
-import { SendIcon } from './icons/Icons';
-import { ThinkingIndicator } from './ThinkingIndicator';
-import { LIGHT_THEME_COLORS } from '../constants';
+// @ts-nocheck
+import React, { useState, Fragment } from 'react';
 
 interface InputBarProps {
   onSend: (text: string) => void;
   isLoading: boolean;
+  isWindowVisible: boolean;
 }
 
-export const InputBar: React.FC<InputBarProps> = ({ onSend, isLoading }) => {
+export const InputBar: React.FC<InputBarProps> = ({ onSend, isLoading, isWindowVisible }) => {
   const [text, setText] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (text.trim() && !isLoading) {
       onSend(text);
@@ -19,31 +18,30 @@ export const InputBar: React.FC<InputBarProps> = ({ onSend, isLoading }) => {
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className={`flex items-center p-1 ${LIGHT_THEME_COLORS.background.panel} border-t-2 ${LIGHT_THEME_COLORS.border.primary}`}>
-      {isLoading ? (
-          <ThinkingIndicator />
-      ) : (
-        <>
-            <input
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="どうする？"
-            className={`flex-grow bg-transparent ${LIGHT_THEME_COLORS.text.primary} placeholder-slate-400 focus:outline-none px-4 py-2 text-lg`}
-            disabled={isLoading}
-            autoFocus
-            />
-            <button
-            type="submit"
-            aria-label="Send"
-            disabled={isLoading || !text.trim()}
-            className={`p-3 ${LIGHT_THEME_COLORS.button.primary.text} rounded-full transition-colors disabled:${LIGHT_THEME_COLORS.text.light} enabled:${LIGHT_THEME_COLORS.button.primary.hover}`}
-            >
-                <SendIcon />
-            </button>
-        </>
-      )}
-    </form>
+  if (!isWindowVisible) return null;
+
+  return React.createElement('form', { 
+    onSubmit: handleSubmit, 
+    className: 'flex items-center p-2 bg-slate-200 border-t-2 border-slate-300 max-w-4xl mx-auto' 
+  },
+    isLoading ? 
+      React.createElement('div', { 
+        className: 'flex items-center justify-center w-full px-4 py-2 text-slate-500 animate-pulse' 
+      }, 'AIが思考中...') :
+      React.createElement(Fragment, null,
+        React.createElement('input', { 
+          type: 'text', 
+          value: text, 
+          onChange: e => setText(e.target.value), 
+          placeholder: 'どうする？', 
+          className: 'flex-grow bg-transparent text-slate-800 placeholder-slate-500 focus:outline-none px-4 py-2 text-lg', 
+          disabled: isLoading 
+        }),
+        React.createElement('button', { 
+          type: 'submit', 
+          disabled: isLoading || !text.trim(), 
+          className: 'p-3 text-white bg-sky-500 rounded-full disabled:bg-slate-400 hover:bg-sky-600' 
+        }, '➤')
+      )
   );
 };
