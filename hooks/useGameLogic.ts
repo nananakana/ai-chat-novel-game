@@ -59,7 +59,7 @@ const DUMMY_RESPONSES = [
   { speaker: "謎の声", text: "…何者だ…？", event: "voice_heard" }
 ];
 
-// AI生成関数（Gemini/OpenAI対応）
+// AI生成関数（拡張モデル対応）
 const generateResponse = async (history, settings) => {
   // ダミーモードの場合
   if (settings.aiModel === 'dummy') {
@@ -77,12 +77,24 @@ const generateResponse = async (history, settings) => {
     );
   }
 
-  // Gemini API呼び出し
-  if (settings.aiModel === 'gemini' && settings.geminiApiKey) {
+  // Gemini API呼び出し（全Geminiモデル対応）
+  if (settings.aiModel?.startsWith('gemini') && settings.geminiApiKey) {
     try {
       if (typeof window !== 'undefined' && window.GoogleGenerativeAI) {
         const genAI = new window.GoogleGenerativeAI(settings.geminiApiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        // モデル名のマッピング
+        const getGeminiModelName = (aiModel) => {
+          switch (aiModel) {
+            case 'gemini-flash': return 'gemini-1.5-flash';
+            case 'gemini-pro': return 'gemini-1.5-pro';
+            case 'gemini-ultra': return 'gemini-ultra';
+            default: return 'gemini-1.5-flash'; // デフォルト
+          }
+        };
+        
+        const modelName = getGeminiModelName(settings.aiModel);
+        const model = genAI.getGenerativeModel({ model: modelName });
         
         const prompt = createGamePrompt(history, settings);
         const result = await model.generateContent(prompt);
@@ -99,7 +111,7 @@ const generateResponse = async (history, settings) => {
             ...parsedResponse,
             timestamp: new Date().toISOString()
           },
-          cost: estimateCost(text, 'gemini')
+          cost: estimateCost(text, settings.aiModel)
         };
       }
     } catch (error) {
@@ -108,8 +120,8 @@ const generateResponse = async (history, settings) => {
     }
   }
 
-  // OpenAI API呼び出し
-  if (settings.aiModel === 'chatgpt' && settings.openaiApiKey) {
+  // OpenAI API呼び出し（全GPTモデル対応）
+  if (settings.aiModel?.startsWith('gpt') && settings.openaiApiKey) {
     try {
       if (typeof window !== 'undefined' && window.OpenAI) {
         const openai = new window.OpenAI({
@@ -117,9 +129,20 @@ const generateResponse = async (history, settings) => {
           dangerouslyAllowBrowser: true
         });
         
+        // モデル名のマッピング
+        const getOpenAIModelName = (aiModel) => {
+          switch (aiModel) {
+            case 'gpt-4o-mini': return 'gpt-4o-mini';
+            case 'gpt-4o': return 'gpt-4o';
+            case 'gpt-4-turbo': return 'gpt-4-turbo';
+            default: return 'gpt-4o-mini'; // デフォルト
+          }
+        };
+        
+        const modelName = getOpenAIModelName(settings.aiModel);
         const prompt = createGamePrompt(history, settings);
         const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: modelName,
           messages: [{ role: "system", content: prompt }],
           max_tokens: 500,
           temperature: 0.7
@@ -135,7 +158,7 @@ const generateResponse = async (history, settings) => {
             ...parsedResponse,
             timestamp: new Date().toISOString()
           },
-          cost: estimateCost(content, 'openai')
+          cost: estimateCost(content, settings.aiModel)
         };
       }
     } catch (error) {
@@ -188,16 +211,17 @@ ${characterList}
 ${conversationText}
 
 ### 特別な指示
-- キャラクターを登場させる場合は、eventフィールドに "show_character:キャラクター名" を設定してください
-- キャラクターを退場させる場合は、eventフィールドに "hide_character:キャラクター名" を設定してください
-- 背景を変更する場合は、eventフィールドに "change_background:背景の説明" を設定してください
+- 現在場面にいるキャラクターをscene_charactersフィールドに配列形式で必ず報告してください
+- キャラクターが誰もいない場合は空のリスト [] を返してください
+- 背景を変更する場合は、eventフィールドに "change_background:背景名" を設定してください
 
 ### 出力形式
 以下のJSON形式で物語の続きを出力してください：
-{"speaker": "話者名", "text": "生成したセリフや状況説明", "event": "イベント名またはnull"}
+{"speaker": "話者名", "text": "生成したセリフや状況説明", "event": "イベント名またはnull", "scene_characters": ["キャラクター名1", "キャラクター名2"]}
 
-例: {"speaker": "ナレーター", "text": "目の前には巨大な扉が立ちはだかっている。", "event": null}
-例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": "show_character:アキラ"}`;
+例: {"speaker": "ナレーター", "text": "目の前には巨大な扉が立ちはだかっている。", "event": null, "scene_characters": []}
+例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": null, "scene_characters": ["アキラ"]}
+例: {"speaker": "ナレーター", "text": "アキラとニックが現れた。", "event": null, "scene_characters": ["アキラ", "ニック"]}`;
 };
 
 // AIレスポンスパーサー
@@ -210,7 +234,8 @@ const parseAIResponse = (text) => {
       return {
         speaker: parsed.speaker || 'ナレーター',
         text: parsed.text || text,
-        event: parsed.event || null
+        event: parsed.event || null,
+        scene_characters: parsed.scene_characters || []
       };
     }
   } catch (e) {
@@ -221,18 +246,91 @@ const parseAIResponse = (text) => {
   return {
     speaker: 'ナレーター',
     text: text.trim(),
-    event: null
+    event: null,
+    scene_characters: []
   };
 };
 
-// コスト推定
-const estimateCost = (text, model) => {
+// ギャラリーアイテム生成（イベントCG対応）
+const createGalleryItem = (message) => {
+  const eventName = message.event;
+  const isCharacterEvent = eventName?.startsWith('show_character:') || eventName?.startsWith('hide_character:');
+  
+  // キャラクターの出入りイベントはギャラリー対象外
+  if (isCharacterEvent) return null;
+  
+  // イベント名からCGのテーマを決定
+  const getImageTheme = (event) => {
+    const themes = {
+      'game_start': 'ancient+ruins+fantasy+misty',
+      'found_key': 'golden+key+magical+light',
+      'meet_akira': 'anime+character+meeting+fantasy',
+      'door_opened': 'ancient+door+opening+light',
+      'treasure_found': 'treasure+chest+golden+coins',
+      'battle_victory': 'victory+celebration+fantasy',
+      'mysterious_voice': 'mysterious+dark+figure+shadow',
+      'magic_spell': 'magical+spell+glowing+runes',
+      'forest_entrance': 'enchanted+forest+magical+trees',
+      'castle_approach': 'fantasy+castle+dramatic+clouds'
+    };
+    
+    return themes[event] || `fantasy+adventure+${encodeURIComponent(event)}`;
+  };
+  
+  const imageTheme = getImageTheme(eventName);
+  const imageUrl = `https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=800&h=600&auto=format&fit=crop&text=${imageTheme}`;
+  
+  return {
+    id: `${Date.now()}_${eventName}`,
+    title: getEventTitle(eventName),
+    description: message.text.length > 150 ? message.text.substring(0, 150) + '...' : message.text,
+    imageUrl: imageUrl,
+    unlockedAt: new Date().toISOString(),
+    eventName: eventName,
+    speaker: message.speaker
+  };
+};
+
+// イベントタイトルの生成
+const getEventTitle = (eventName) => {
+  const titles = {
+    'game_start': '🌅 物語の始まり',
+    'found_key': '🔑 古い鍵の発見',
+    'meet_akira': '👥 アキラとの出会い',
+    'door_opened': '🚪 扉の向こう側',
+    'treasure_found': '💎 隠された宝物',
+    'battle_victory': '⚔️ 勝利の瞬間',
+    'mysterious_voice': '👻 謎の声',
+    'magic_spell': '✨ 魔法の発動',
+    'forest_entrance': '🌲 森への入口',
+    'castle_approach': '🏰 城への接近'
+  };
+  
+  return titles[eventName] || `🎭 ${eventName}`;
+};
+
+// コスト推定（拡張モデル対応）
+const estimateCost = (text, modelType) => {
   const tokenCount = Math.ceil(text.length / 4); // 簡易的なトークン数推定
   
-  if (model === 'gemini') {
-    return tokenCount * 0.000001; // Gemini 1.5 Flashのコスト目安
-  } else if (model === 'openai') {
-    return tokenCount * 0.00001; // GPT-4o-miniのコスト目安
+  // Geminiモデルのコスト (USD per 1000 tokens)
+  if (modelType?.startsWith('gemini')) {
+    switch (modelType) {
+      case 'gemini-flash': return tokenCount * 0.000001; // Flash: 非常に安価
+      case 'gemini-pro': return tokenCount * 0.000005; // Pro: 中価格
+      case 'gemini-ultra': return tokenCount * 0.00002; // Ultra: 高価格
+      default: return tokenCount * 0.000001;
+    }
+  }
+  
+  // OpenAIモデルのコスト (USD per 1000 tokens)
+  if (modelType?.startsWith('gpt')) {
+    switch (modelType) {
+      case 'gpt-4o-mini': return tokenCount * 0.00015; // Mini: 安価
+      case 'gpt-4o': return tokenCount * 0.005; // 4o: 中価格
+      case 'gpt-4-turbo': return tokenCount * 0.01; // Turbo: 高価格
+      default: return tokenCount * 0.00015;
+    }
   }
   
   return 0;
@@ -276,18 +374,11 @@ export const useGameLogic = () => {
       
       // イベントが発生した場合のギャラリー処理
       let updatedState = { message, cost };
-      if (message.event) {
-        const galleryItem = {
-          id: Date.now().toString(),
-          title: `イベント: ${message.event}`,
-          description: message.text.substring(0, 100) + '...',
-          imageUrl: `https://placehold.co/400x300/e2e8f0/64748b?text=${encodeURIComponent(message.event)}`,
-          unlockedAt: new Date().toISOString(),
-          eventName: message.event
-        };
-        
-        // ゲーム状態にギャラリーアイテムを追加
-        updatedState.galleryItem = galleryItem;
+      if (message.event && message.event !== 'change_background') {
+        const galleryItem = createGalleryItem(message);
+        if (galleryItem) {
+          updatedState.galleryItem = galleryItem;
+        }
       }
       
       dispatch({ type: 'RECEIVE_RESPONSE_SUCCESS', payload: updatedState });

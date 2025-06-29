@@ -43,7 +43,7 @@ const SYSTEM_PROMPT_TEMPLATE = `あなたは卓越したインタラクティブ
 const INITIAL_SETTINGS = { 
   geminiApiKey: '', 
   openaiApiKey: '', 
-  aiModel: 'gemini', 
+  aiModel: 'gemini-flash', 
   showCost: true, 
   worldPrompt: DEFAULT_WORLD_PROMPT, 
   characters: DEFAULT_CHARACTERS 

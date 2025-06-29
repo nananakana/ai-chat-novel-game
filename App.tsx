@@ -44,36 +44,48 @@ const App = () => {
     setVisibleCharacters(displayableCharacters.slice(0, 3)); // 最大3人まで
   }, [state.settings?.characters]);
 
-  // アクティブキャラクター管理（eventベース）
+  // アクティブキャラクター管理（scene_charactersベース）
   useEffect(() => {
-    if (!lastMessage?.event) return;
+    if (!lastMessage) return;
     
-    const event = lastMessage.event;
+    // scene_charactersリストがある場合はそれを使用
+    if (lastMessage.scene_characters && Array.isArray(lastMessage.scene_characters)) {
+      const sceneCharacterNames = lastMessage.scene_characters;
+      const newActiveCharacters = [];
+      
+      // 各キャラクター名をキャラクターオブジェクトに変換
+      sceneCharacterNames.forEach(characterName => {
+        const character = state.settings?.characters?.find(c => 
+          c.name === characterName || c.alias?.includes(characterName)
+        );
+        
+        if (character && !character.isProtagonist && character.image) {
+          newActiveCharacters.push(character);
+        }
+      });
+      
+      // 最大3人までに制限
+      setActiveCharacters(newActiveCharacters.slice(0, 3));
+    }
     
-    if (event.startsWith('show_character:')) {
-      const characterName = event.replace('show_character:', '').trim();
-      const character = state.settings?.characters?.find(c => 
-        c.name === characterName || c.alias?.includes(characterName)
+    // 背景変更イベント処理
+    if (lastMessage.event && lastMessage.event.startsWith('change_background:')) {
+      const backgroundName = lastMessage.event.replace('change_background:', '').trim();
+      
+      // 設定から背景を検索
+      const backgroundData = state.settings?.backgrounds?.find(bg => 
+        bg.name === backgroundName || bg.name.toLowerCase().includes(backgroundName.toLowerCase())
       );
       
-      if (character && !character.isProtagonist) {
-        setActiveCharacters(prev => {
-          const updated = prev.filter(c => c.id !== character.id);
-          return [...updated, character].slice(-3); // 最大3人まで
-        });
+      if (backgroundData && backgroundData.url) {
+        setBackground(backgroundData.url);
+      } else {
+        // フォールバック: 説明ベースの背景生成
+        const newBackgroundUrl = `https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&text=${encodeURIComponent(backgroundName)}`;
+        setBackground(newBackgroundUrl);
       }
-    } else if (event.startsWith('hide_character:')) {
-      const characterName = event.replace('hide_character:', '').trim();
-      setActiveCharacters(prev => 
-        prev.filter(c => c.name !== characterName && !c.alias?.includes(characterName))
-      );
-    } else if (event.startsWith('change_background:')) {
-      const backgroundDescription = event.replace('change_background:', '').trim();
-      // 背景変更の簡易実装（実際の画像URLの代わりに説明ベースの背景を設定）
-      const newBackgroundUrl = `https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&text=${encodeURIComponent(backgroundDescription)}`;
-      setBackground(newBackgroundUrl);
     }
-  }, [lastMessage?.event, state.settings?.characters]);
+  }, [lastMessage, state.settings?.characters, state.settings?.backgrounds]);
 
   return React.createElement('div', { 
     className: 'relative w-screen h-screen overflow-hidden bg-slate-50 text-slate-800 select-none' 

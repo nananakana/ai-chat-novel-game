@@ -75,19 +75,39 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           React.createElement('h3', {
             className: 'text-lg font-semibold mb-2 text-slate-700'
           }, 'AIモデル'),
+          React.createElement('div', {
+            className: 'bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4'
+          },
+            React.createElement('h4', {
+              className: 'text-sm font-medium text-blue-800 mb-2'
+            }, '📊 モデル選択ガイド'),
+            React.createElement('p', {
+              className: 'text-xs text-blue-700'
+            }, '各グループで「高速・安価」「バランス」「高性能・高価」の選択肢を提供')
+          ),
           React.createElement('select', {
             id: 'aiModel',
-            value: settings?.aiModel || 'gemini',
+            value: settings?.aiModel || 'gemini-flash',
             onChange: e => onSettingsChange({ aiModel: e.target.value }),
             className: 'w-full p-2 bg-white border border-slate-300 rounded-md mb-4'
           },
-            React.createElement('option', { value: 'gemini' }, 'Gemini 1.5 Flash'),
-            React.createElement('option', { value: 'chatgpt' }, 'ChatGPT-4o-mini'),
-            React.createElement('option', { value: 'dummy' }, 'Dummy AI')
+            React.createElement('optgroup', { label: '🟢 Gemini Models' },
+              React.createElement('option', { value: 'gemini-flash' }, 'Gemini 1.5 Flash (高速・安価)'),
+              React.createElement('option', { value: 'gemini-pro' }, 'Gemini 1.5 Pro (バランス)'),
+              React.createElement('option', { value: 'gemini-ultra' }, 'Gemini Ultra (高性能・高価)')
+            ),
+            React.createElement('optgroup', { label: '🔵 ChatGPT Models' },
+              React.createElement('option', { value: 'gpt-4o-mini' }, 'GPT-4o Mini (高速・安価)'),
+              React.createElement('option', { value: 'gpt-4o' }, 'GPT-4o (バランス)'),
+              React.createElement('option', { value: 'gpt-4-turbo' }, 'GPT-4 Turbo (高性能・高価)')
+            ),
+            React.createElement('optgroup', { label: '🟡 その他' },
+              React.createElement('option', { value: 'dummy' }, 'Dummy AI (テスト用)')
+            )
           ),
           
           // Gemini APIキー入力欄
-          (settings?.aiModel === 'gemini' || !settings?.aiModel) && React.createElement('div', {
+          (settings?.aiModel?.startsWith('gemini') || !settings?.aiModel) && React.createElement('div', {
             className: 'mb-4'
           },
             React.createElement('label', {
@@ -105,7 +125,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           ),
           
           // OpenAI APIキー入力欄
-          settings?.aiModel === 'chatgpt' && React.createElement('div', {
+          settings?.aiModel?.startsWith('gpt') && React.createElement('div', {
             className: 'mb-4'
           },
             React.createElement('label', {
