@@ -98,13 +98,14 @@ export default function App() {
 
       {/* キャラクターレイヤー */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-5/6 w-1/2 flex items-end justify-center">
-         <img 
-            src={characterImage}
-            alt="" 
-            className="h-full object-contain drop-shadow-lg transition-opacity duration-500"
-            style={{ opacity: characterImage ? 1 : 0 }}
-            key={characterImage}
-          />
+         {characterImage && (
+           <img 
+              src={characterImage}
+              alt="" 
+              className="h-full object-contain drop-shadow-lg transition-opacity duration-500"
+              key={characterImage}
+            />
+         )}
       </div>
 
       {/* 常時表示主人公キャラクター */}
