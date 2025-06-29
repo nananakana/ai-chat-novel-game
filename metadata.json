@@ -1,0 +1,5 @@
+{
+  "name": "AI Chat Novel Game",
+  "description": "An interactive storytelling game where an AI dynamically generates the narrative based on player choices. Features selectable AI models, a persistent memory system, and real-time cost tracking.",
+  "requestFramePermissions": []
+}
