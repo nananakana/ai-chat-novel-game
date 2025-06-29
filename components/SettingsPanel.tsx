@@ -25,18 +25,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, s
         
         <div className="space-y-6">
           <div>
-            <label htmlFor="apiKey" className="block text-sm font-medium text-gray-400 mb-1">Gemini API Key</label>
-            <input
-              id="apiKey"
-              type="password"
-              value={settings.apiKey}
-              onChange={(e) => onSettingsChange({ apiKey: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="APIキーを入力..."
-            />
-          </div>
-          
-          <div>
             <label htmlFor="aiModel" className="block text-sm font-medium text-gray-400 mb-1">AIモデル</label>
             <select
               id="aiModel"
@@ -45,9 +33,47 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, s
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="gemini">Gemini 1.5 Flash</option>
+              <option value="chatgpt">ChatGPT-4o-mini</option>
+              <option value="gemini-cli">Gemini CLI (Local)</option>
               <option value="dummy">Debug (Dummy AI)</option>
             </select>
           </div>
+
+          {settings.aiModel === 'gemini' && (
+            <div>
+              <label htmlFor="geminiApiKey" className="block text-sm font-medium text-gray-400 mb-1">Gemini API Key</label>
+              <input
+                id="geminiApiKey"
+                type="password"
+                value={settings.geminiApiKey}
+                onChange={(e) => onSettingsChange({ geminiApiKey: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Gemini APIキーを入力..."
+              />
+            </div>
+          )}
+
+          {settings.aiModel === 'chatgpt' && (
+            <div>
+              <label htmlFor="openaiApiKey" className="block text-sm font-medium text-gray-400 mb-1">OpenAI API Key</label>
+              <input
+                id="openaiApiKey"
+                type="password"
+                value={settings.openaiApiKey}
+                onChange={(e) => onSettingsChange({ openaiApiKey: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="OpenAI APIキーを入力..."
+              />
+            </div>
+          )}
+
+          {settings.aiModel === 'gemini-cli' && (
+            <div className="p-3 bg-yellow-800 bg-opacity-50 border border-yellow-600 rounded-md">
+              <p className="text-sm text-yellow-300">
+                Gemini CLIモードは現在ブラウザでは動作しません。サーバーサイド実装が必要です。
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <label htmlFor="showCost" className="text-sm font-medium text-gray-300">コストを表示</label>

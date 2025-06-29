@@ -64,10 +64,10 @@ export const useGameLogic = () => {
       !state.isLoading && !state.isSummarizing
     ) {
       const updateMemory = async () => {
-        if(!state.settings.apiKey) return;
+        if(!state.settings.geminiApiKey && !state.settings.openaiApiKey) return;
         dispatch({ type: 'START_SUMMARIZING' });
         try {
-          const summary = await summarizeHistory(state.messages, state.settings.apiKey);
+          const summary = await summarizeHistory(state.messages, state.settings);
           dispatch({ type: 'UPDATE_LONG_TERM_MEMORY', payload: summary });
         } catch (e) {
           console.error("Failed to summarize history:", e);
@@ -76,7 +76,7 @@ export const useGameLogic = () => {
       };
       updateMemory();
     }
-  }, [state.messages.length, state.isLoading, state.isSummarizing, state.settings.apiKey, state.longTermMemory, state.messages]);
+  }, [state.messages.length, state.isLoading, state.isSummarizing, state.settings.geminiApiKey, state.settings.openaiApiKey, state.longTermMemory, state.messages]);
 
   // メッセージ送信処理
   const handleSendMessage = useCallback(async (text: string) => {

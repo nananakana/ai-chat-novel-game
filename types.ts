@@ -1,4 +1,4 @@
-export type AiModel = 'gemini' | 'dummy';
+export type AiModel = 'gemini' | 'chatgpt' | 'gemini-cli' | 'dummy';
 
 export interface ChatMessage {
   id: string;
@@ -11,7 +11,8 @@ export interface ChatMessage {
 }
 
 export interface GameSettings {
-  apiKey: string;
+  geminiApiKey: string;
+  openaiApiKey: string;
   aiModel: AiModel;
   showCost: boolean;
 }

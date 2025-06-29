@@ -29,7 +29,8 @@ export const SYSTEM_PROMPT_TEMPLATE = `あなたは卓越したインタラク�
 
 // 各種設定の初期値
 export const INITIAL_SETTINGS: GameSettings = {
-  apiKey: '',
+  geminiApiKey: '',
+  openaiApiKey: '',
   aiModel: 'gemini',
   showCost: true,
 };
