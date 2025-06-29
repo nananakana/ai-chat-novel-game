@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GameSettings } from '../types';
+import { costService } from '../services/costService';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -9,6 +10,34 @@ interface SettingsPanelProps {
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, settings, onSettingsChange }) => {
+  const [monthlyLimit, setMonthlyLimit] = useState(50);
+  const [costStats, setCostStats] = useState({ currentCost: 0, limit: 50 });
+
+  useEffect(() => {
+    if (isOpen) {
+      const limit = costService.getMonthlyLimit();
+      const currentCost = costService.getCurrentMonthCost();
+      setMonthlyLimit(limit);
+      setCostStats({ currentCost, limit });
+    }
+  }, [isOpen]);
+
+  const handleLimitUpdate = () => {
+    costService.setMonthlyLimit(monthlyLimit);
+    setCostStats(prev => ({ ...prev, limit: monthlyLimit }));
+  };
+
+  const handleDownloadCsv = () => {
+    costService.downloadCsvReport();
+  };
+
+  const handleClearCostHistory = () => {
+    if (confirm('コスト履歴を削除しますか？この操作は元に戻せません。')) {
+      costService.clearCostHistory();
+      setCostStats({ currentCost: 0, limit: monthlyLimit });
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -81,6 +110,65 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, s
                 <input id="showCost" type="checkbox" checked={settings.showCost} onChange={(e) => onSettingsChange({ showCost: e.target.checked })} className="sr-only peer" />
                 <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-indigo-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
               </div>
+          </div>
+
+          {/* コスト管理セクション */}
+          <div className="border-t border-gray-600 pt-6">
+            <h3 className="text-lg font-semibold mb-4">コスト管理</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm text-gray-300 mb-2">
+                  今月の使用量: ${costStats.currentCost.toFixed(6)} / ${costStats.limit} USD
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all ${
+                      costStats.currentCost >= costStats.limit ? 'bg-red-500' : 
+                      costStats.currentCost >= costStats.limit * 0.8 ? 'bg-yellow-500' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min((costStats.currentCost / costStats.limit) * 100, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="monthlyLimit" className="block text-sm font-medium text-gray-400 mb-1">月次上限 (USD)</label>
+                <div className="flex gap-2">
+                  <input
+                    id="monthlyLimit"
+                    type="number"
+                    min="1"
+                    max="1000"
+                    step="1"
+                    value={monthlyLimit}
+                    onChange={(e) => setMonthlyLimit(Number(e.target.value))}
+                    className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    onClick={handleLimitUpdate}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors"
+                  >
+                    更新
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDownloadCsv}
+                  className="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded-md transition-colors"
+                >
+                  CSV出力
+                </button>
+                <button
+                  onClick={handleClearCostHistory}
+                  className="flex-1 py-2 bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                >
+                  履歴削除
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 

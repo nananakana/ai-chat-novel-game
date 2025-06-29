@@ -50,6 +50,7 @@ export const INITIAL_STATE: GameState = {
   totalCost: 0,
   isLoading: false,
   isSummarizing: false,
+  isMemoryInitializing: false,
   error: null,
 };
 

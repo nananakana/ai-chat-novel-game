@@ -2,6 +2,7 @@ import { useReducer, useEffect, useCallback } from 'react';
 import { GameState, ChatMessage, GameSettings } from '../types';
 import { INITIAL_STATE, LONG_TERM_MEMORY_UPDATE_INTERVAL } from '../constants';
 import { generateResponse, summarizeHistory } from '../services/aiAdapter';
+import { memoryService } from '../services/memoryService';
 
 // Reducerのアクション定義
 type Action =
@@ -11,6 +12,8 @@ type Action =
   | { type: 'UPDATE_SETTINGS'; payload: Partial<GameSettings> }
   | { type: 'START_SUMMARIZING' }
   | { type: 'UPDATE_LONG_TERM_MEMORY'; payload: string }
+  | { type: 'START_MEMORY_INITIALIZING' }
+  | { type: 'FINISH_MEMORY_INITIALIZING' }
   | { type: 'SAVE_GAME' }
   | { type: 'LOAD_GAME'; payload: GameState }
   | { type: 'CLEAR_ERROR' };
@@ -36,6 +39,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return { ...state, isSummarizing: true };
     case 'UPDATE_LONG_TERM_MEMORY':
         return { ...state, isSummarizing: false, longTermMemory: action.payload };
+    case 'START_MEMORY_INITIALIZING':
+        return { ...state, isMemoryInitializing: true };
+    case 'FINISH_MEMORY_INITIALIZING':
+        return { ...state, isMemoryInitializing: false };
     case 'SAVE_GAME':
       try {
         localStorage.setItem('aiChatNovelGameSave', JSON.stringify(state));
@@ -54,6 +61,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
 export const useGameLogic = () => {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_STATE);
+
+  // メモリサービスの初期化
+  useEffect(() => {
+    const initializeMemory = async () => {
+      if ((state.settings.openaiApiKey || state.settings.geminiApiKey) && !state.isMemoryInitializing) {
+        dispatch({ type: 'START_MEMORY_INITIALIZING' });
+        try {
+          await memoryService.initialize(state.settings);
+        } catch (error) {
+          console.warn('Memory service initialization failed:', error);
+        } finally {
+          dispatch({ type: 'FINISH_MEMORY_INITIALIZING' });
+        }
+      }
+    };
+    initializeMemory();
+  }, [state.settings.openaiApiKey, state.settings.geminiApiKey, state.isMemoryInitializing]);
 
   // メッセージ履歴の変更を監視して長期記憶を更新
   useEffect(() => {
@@ -98,6 +122,13 @@ export const useGameLogic = () => {
         state.settings
       );
       dispatch({ type: 'RECEIVE_RESPONSE_SUCCESS', payload: { message, cost } });
+
+      // メモリサービスに記憶を保存
+      try {
+        await memoryService.saveMemory(message, text);
+      } catch (memoryError) {
+        console.warn('Failed to save memory:', memoryError);
+      }
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : '不明なエラーが発生しました。';
       dispatch({ type: 'RECEIVE_RESPONSE_ERROR', payload: errorMessage });
@@ -108,19 +139,39 @@ export const useGameLogic = () => {
     dispatch({ type: 'UPDATE_SETTINGS', payload: newSettings });
   };
 
-  const saveGame = () => {
-    dispatch({ type: 'SAVE_GAME' });
-    alert('ゲームの状態を保存しました。');
+  const saveGame = async () => {
+    try {
+      // メモリのエクスポート
+      const memories = await memoryService.exportMemories();
+      const gameData = {
+        ...state,
+        memories
+      };
+      localStorage.setItem('aiChatNovelGameSave', JSON.stringify(gameData));
+      dispatch({ type: 'SAVE_GAME' });
+      alert('ゲームの状態を保存しました。');
+    } catch (e) {
+      console.error("セーブに失敗しました:", e);
+      alert('セーブに失敗しました。');
+    }
   };
 
-  const loadGame = () => {
+  const loadGame = async () => {
     const savedStateJSON = localStorage.getItem('aiChatNovelGameSave');
     if (savedStateJSON) {
       try {
-        const savedState: GameState = JSON.parse(savedStateJSON);
+        const savedData = JSON.parse(savedStateJSON);
+        const { memories, ...savedState } = savedData;
+        
+        // メモリの復元
+        if (memories) {
+          await memoryService.importMemories(memories);
+        }
+        
         dispatch({ type: 'LOAD_GAME', payload: savedState });
         alert('ゲームの状態をロードしました。');
       } catch (e) {
+        console.error("ロードに失敗しました:", e);
         alert('セーブデータの読み込みに失敗しました。');
       }
     } else {

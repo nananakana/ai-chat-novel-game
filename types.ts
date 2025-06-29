@@ -24,5 +24,6 @@ export interface GameState {
   totalCost: number;
   isLoading: boolean;
   isSummarizing: boolean;
+  isMemoryInitializing: boolean;
   error: string | null;
 }

@@ -84,6 +84,7 @@ export default function App() {
           onSaveClick={saveGame}
           onLoadClick={loadGame}
           isSummarizing={state.isSummarizing}
+          isMemoryInitializing={state.isMemoryInitializing}
           error={state.error}
         />
         

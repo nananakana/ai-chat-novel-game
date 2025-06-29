@@ -2,6 +2,8 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import OpenAI from 'openai';
 import { GameSettings, ChatMessage, AiModel } from '../types';
 import { SYSTEM_PROMPT_TEMPLATE, SHORT_TERM_MEMORY_TURNS } from '../constants';
+import { memoryService } from './memoryService';
+import { costService } from './costService';
 
 // ダミーAIの応答リスト
 const DUMMY_RESPONSES = [
@@ -14,23 +16,6 @@ let dummyResponseIndex = 0;
 const GEMINI_MODEL = 'gemini-2.5-flash-preview-04-17';
 const CHATGPT_MODEL = 'gpt-4o-mini';
 
-// ChatGPT用コスト計算（概算）
-function estimateChatGptCost(prompt: string, response: string): number {
-    const inputTokens = Math.ceil(prompt.length / 4);
-    const outputTokens = Math.ceil(response.length / 4);
-    const inputCost = (inputTokens / 1000) * 0.00015;
-    const outputCost = (outputTokens / 1000) * 0.0006;
-    return inputCost + outputCost;
-}
-
-// Gemini用コスト計算（概算）
-function estimateGeminiCost(prompt: string, response: string): number {
-    const inputChars = prompt.length;
-    const outputChars = response.length;
-    const inputCost = (inputChars / 1000) * 0.000105;
-    const outputCost = (outputChars / 1000) * 0.000210;
-    return inputCost + outputCost;
-}
 
 // Gemini CLI実行関数
 async function callGeminiCli(prompt: string): Promise<string> {
@@ -101,14 +86,51 @@ export const generateResponse = async (
     const shortTermMemoryText = shortTermMemory.map(m => `${m.role === 'user' ? 'プレイヤー' : m.speaker}: ${m.text}`).join('\n');
     const playerInput = history[history.length - 1].text;
 
+    // ベクトル検索による長期記憶の取得
+    let vectorSearchMemory = '';
+    try {
+        const searchResults = await memoryService.searchMemories(playerInput, 3);
+        if (searchResults.length > 0) {
+            vectorSearchMemory = '過去の関連する記憶:\n' + 
+                searchResults.map((result, index) => 
+                    `${index + 1}. ${result.text} (類似度: ${(result.similarity * 100).toFixed(1)}%)`
+                ).join('\n');
+        }
+    } catch (error) {
+        console.warn('Vector search failed, using text-based memory only:', error);
+    }
+
+    // 従来の要約ベースの長期記憶とベクトル検索結果を統合
+    const combinedLongTermMemory = [longTermMemory, vectorSearchMemory]
+        .filter(memory => memory.trim() !== '')
+        .join('\n\n');
+
     const prompt = SYSTEM_PROMPT_TEMPLATE
-        .replace('{longTermMemory}', longTermMemory)
+        .replace('{longTermMemory}', combinedLongTermMemory)
         .replace('{shortTermMemory}', shortTermMemoryText)
         .replace('{playerInput}', playerInput);
 
+    // 月次上限チェック
+    const limitWarning = costService.getMonthlyLimitWarning();
+    if (limitWarning.isOverLimit && settings.aiModel !== 'dummy') {
+        console.warn(`Monthly cost limit exceeded (${limitWarning.currentCost.toFixed(4)}/${limitWarning.limit} USD), switching to dummy mode`);
+        // 自動的にダミーモードに切り替え
+        const dummyIndex = (Date.now() % DUMMY_RESPONSES.length);
+        const dummyResponse = DUMMY_RESPONSES[dummyIndex];
+        
+        const newMessage: ChatMessage = {
+            id: Date.now().toString(),
+            role: 'model',
+            speaker: dummyResponse.speaker,
+            text: `${dummyResponse.text}\n\n※ 月次コスト上限に達したため、ダミーモードで動作しています。`,
+            event: dummyResponse.event,
+            timestamp: new Date().toISOString(),
+        };
+        return { message: newMessage, cost: 0 };
+    }
+
     try {
         let responseText: string;
-        let cost: number;
 
         switch (settings.aiModel) {
             case 'gemini':
@@ -124,7 +146,6 @@ export const generateResponse = async (
                     }
                 });
                 responseText = geminiResponse.text;
-                cost = estimateGeminiCost(prompt, responseText);
                 break;
 
             case 'chatgpt':
@@ -144,12 +165,10 @@ export const generateResponse = async (
                     temperature: 0.8,
                 });
                 responseText = chatResponse.choices[0]?.message?.content || '{}';
-                cost = estimateChatGptCost(prompt, responseText);
                 break;
 
             case 'gemini-cli':
                 responseText = await callGeminiCli(prompt);
-                cost = 0; // CLI使用時はコスト無料と仮定
                 break;
 
             default:
@@ -157,6 +176,9 @@ export const generateResponse = async (
         }
 
         const parsedResponse = parseJsonResponse(responseText);
+        
+        // コスト計算と記録
+        const costEntry = costService.recordCost(settings.aiModel, prompt, responseText);
         
         const newMessage: ChatMessage = {
           id: Date.now().toString(),
@@ -166,7 +188,7 @@ export const generateResponse = async (
           event: parsedResponse.event || null,
           timestamp: new Date().toISOString(),
         };
-        return { message: newMessage, cost };
+        return { message: newMessage, cost: costEntry.cost };
 
     } catch(e) {
         console.error(`${settings.aiModel} API call failed:`, e);
