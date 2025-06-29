@@ -8,12 +8,13 @@ interface HeaderProps {
   onSettingsClick: () => void;
   onSaveClick: () => void;
   onLoadClick: () => void;
+  onBacklogClick: () => void;
   isSummarizing: boolean;
   isMemoryInitializing: boolean;
   error: string | null;
 }
 
-export const Header: React.FC<HeaderProps> = ({ totalCost, showCost, onSettingsClick, onSaveClick, onLoadClick, isSummarizing, isMemoryInitializing, error }) => {
+export const Header: React.FC<HeaderProps> = ({ totalCost, showCost, onSettingsClick, onSaveClick, onLoadClick, onBacklogClick, isSummarizing, isMemoryInitializing, error }) => {
   const [costWarning, setCostWarning] = useState({ isWarning: false, isOverLimit: false, currentCost: 0, limit: 0 });
 
   useEffect(() => {
@@ -47,6 +48,11 @@ export const Header: React.FC<HeaderProps> = ({ totalCost, showCost, onSettingsC
             今月: ${costWarning.currentCost.toFixed(4)} / 総計: ${totalCost.toFixed(6)}
           </div>
         )}
+        <button onClick={onBacklogClick} title="バックログ" className="p-2 hover:bg-gray-700 rounded-full transition-colors">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+        </button>
         <button onClick={onSaveClick} title="セーブ" className="p-2 hover:bg-gray-700 rounded-full transition-colors"><SaveIcon /></button>
         <button onClick={onLoadClick} title="ロード" className="p-2 hover:bg-gray-700 rounded-full transition-colors"><LoadIcon /></button>
         <button onClick={onSettingsClick} title="設定" className="p-2 hover:bg-gray-700 rounded-full transition-colors"><CogIcon /></button>

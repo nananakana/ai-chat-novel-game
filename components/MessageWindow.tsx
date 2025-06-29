@@ -4,9 +4,10 @@ import { ChatMessage } from '../types';
 interface MessageWindowProps {
   message: ChatMessage | null;
   isLoading: boolean;
+  onRetry?: () => void;
 }
 
-export const MessageWindow: React.FC<MessageWindowProps> = ({ message, isLoading }) => {
+export const MessageWindow: React.FC<MessageWindowProps> = ({ message, isLoading, onRetry }) => {
   const [displayedText, setDisplayedText] = useState('');
   const messageRef = useRef<ChatMessage | null>(null);
 
@@ -39,6 +40,12 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ message, isLoading
 
   const currentSpeaker = isLoading && message?.role === 'user' ? 'プレイヤー' : message?.speaker;
 
+  // リトライボタンを表示する条件
+  const showRetryButton = !isLoading && 
+                          message?.role === 'model' && 
+                          onRetry && 
+                          displayedText !== '';
+
   return (
     <div className="relative h-full p-6 flex flex-col justify-end">
         {currentSpeaker && (
@@ -46,6 +53,23 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ message, isLoading
             {currentSpeaker}
           </div>
         )}
+        
+        {/* リトライボタン */}
+        {showRetryButton && (
+          <div className="absolute top-0 right-0 -mt-3 mr-4">
+            <button
+              onClick={onRetry}
+              className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-full transition-colors flex items-center gap-1"
+              title="この応答をやり直す"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              やり直し
+            </button>
+          </div>
+        )}
+        
         <p className="text-xl leading-relaxed whitespace-pre-wrap">
           {displayedText || (!message ? '物語が始まるのを待っています...' : '')}
         </p>

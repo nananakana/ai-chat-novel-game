@@ -62,7 +62,8 @@ function parseJsonResponse(jsonString: string): any {
 export const generateResponse = async (
     history: ChatMessage[],
     longTermMemory: string,
-    settings: GameSettings
+    settings: GameSettings,
+    forcedPrompt?: string | null
   ): Promise<{ message: ChatMessage; cost: number }> => {
 
     if (settings.aiModel === 'dummy') {
@@ -105,9 +106,15 @@ export const generateResponse = async (
         .filter(memory => memory.trim() !== '')
         .join('\n\n');
 
+    // 強制プロンプトの処理
+    const scenarioPromptText = forcedPrompt && forcedPrompt.trim() !== '' 
+        ? `【重要】以下の指示に従って物語を進行してください：\n${forcedPrompt}`
+        : 'なし（通常の物語進行）';
+
     const prompt = SYSTEM_PROMPT_TEMPLATE
         .replace('{longTermMemory}', combinedLongTermMemory)
         .replace('{shortTermMemory}', shortTermMemoryText)
+        .replace('{forcedPrompt}', scenarioPromptText)
         .replace('{playerInput}', playerInput);
 
     // 月次上限チェック

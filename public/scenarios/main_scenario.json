@@ -1,0 +1,39 @@
+{
+  "checkpoints": [
+    {
+      "event": "enter_cave",
+      "description": "プレイヤーが洞窟に入る",
+      "forced_prompt": "暗く湿った洞窟の中は、ひんやりとした空気が漂っている。奥から微かな光が漏れているようだ。プレイヤーの足音だけが静寂を破っている。",
+      "background": "cave",
+      "character": "default"
+    },
+    {
+      "event": "meet_akira",
+      "description": "アキラと出会う",
+      "forced_prompt": "光の元へ進むと、そこに一人の人物がいた。その人物は「アキラ」と名乗り、警戒しつつも君に話しかけてくる。彼の瞳には何か深い秘密が隠されているようだ。",
+      "background": "cave",
+      "character": "akira"
+    },
+    {
+      "event": "find_ancient_device",
+      "description": "古代の装置を発見する",
+      "forced_prompt": "洞窟の奥で、あなたは古代文明の遺物らしき光る装置を発見した。それは微かに脈動しており、触れることを躊躇させる不思議な力を感じる。",
+      "background": "cave",
+      "character": "default"
+    },
+    {
+      "event": "memory_flashback",
+      "description": "記憶のフラッシュバック",
+      "forced_prompt": "突然、あなたの頭に激しい痛みが走る。断片的な記憶が蘇り始める。この場所に来たことがある...そして、重要な何かを忘れている。記憶の扉が少しずつ開かれていく。",
+      "background": "default",
+      "character": ""
+    },
+    {
+      "event": "exit_cave",
+      "description": "洞窟から脱出する",
+      "forced_prompt": "洞窟を出ると、外の世界が一変していることに気づく。空の色が違い、見慣れない植物が生い茂っている。時間の流れが変わったのか、それとも別の場所に転移したのか。",
+      "background": "default",
+      "character": "default"
+    }
+  ]
+}

@@ -14,6 +14,9 @@ export const SYSTEM_PROMPT_TEMPLATE = `あなたは卓越したインタラク�
 ### 短期記憶（直近の会話）
 {shortTermMemory}
 
+### マスターからの特別な指示
+{forcedPrompt}
+
 ### プレイヤーの現在の入力
 プレイヤー: 「{playerInput}」
 
@@ -52,6 +55,8 @@ export const INITIAL_STATE: GameState = {
   isSummarizing: false,
   isMemoryInitializing: false,
   error: null,
+  lastTriggeredEvent: null,
+  pendingScenarioPrompt: null,
 };
 
 export const SHORT_TERM_MEMORY_TURNS = 5; // 短期記憶として保持する対話の数

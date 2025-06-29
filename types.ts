@@ -26,4 +26,6 @@ export interface GameState {
   isSummarizing: boolean;
   isMemoryInitializing: boolean;
   error: string | null;
+  lastTriggeredEvent: string | null;
+  pendingScenarioPrompt: string | null;
 }

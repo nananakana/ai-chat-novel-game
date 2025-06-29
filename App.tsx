@@ -4,54 +4,70 @@ import { Header } from './components/Header';
 import { MessageWindow } from './components/MessageWindow';
 import { InputBar } from './components/InputBar';
 import { SettingsPanel } from './components/SettingsPanel';
+import { BacklogPanel } from './components/BacklogPanel';
+import { scenarioService } from './services/scenarioService';
+import { assetManager } from './services/assetManager';
 
-// 画像アセットの定義
-const IMAGE_ASSETS = {
-  backgrounds: {
-    default: "https://placehold.co/1920x1080/1a1a2e/ffffff?text=Ruins+Entrance",
-    cave: "https://placehold.co/1920x1080/2d2d3a/ffffff?text=Dark+Cave",
-  },
-  characters: {
-    default: "https://placehold.co/800x1200/ffffff/1a1a2e?text=Protagonist",
-    akira: "https://placehold.co/800x1200/ffffff/1a1a2e?text=Akira",
-  }
-};
 
 export default function App() {
-  const { state, handleSendMessage, updateSettings, saveGame, loadGame } = useGameLogic();
+  const { state, handleSendMessage, handleRetry, updateSettings, saveGame, loadGame } = useGameLogic();
   const [isSettingsOpen, setSettingsOpen] = useState(false);
-  const [background, setBackground] = useState(IMAGE_ASSETS.backgrounds.default);
-  const [characterImage, setCharacterImage] = useState(IMAGE_ASSETS.characters.default);
+  const [isBacklogOpen, setBacklogOpen] = useState(false);
+  const [background, setBackground] = useState(assetManager.getDefaultBackground());
+  const [characterImage, setCharacterImage] = useState(assetManager.getDefaultCharacter());
 
   // 表示する最新のメッセージを取得
   const lastMessage = state.messages[state.messages.length - 1];
 
-  // メッセージの更新を監視して画像を変更
+  // メッセージの更新を監視して画像を変更（シナリオ連動）
   useEffect(() => {
-    if (lastMessage?.role === 'model') {
-      // イベントに応じた背景変更
-      if (lastMessage.event === 'enter_cave') {
-        setBackground(IMAGE_ASSETS.backgrounds.cave);
-      } else if (lastMessage.event) {
-        // You can add more event-based background changes here
+    const handleImageChange = async () => {
+      if (lastMessage?.role === 'model' && lastMessage.event) {
+        const eventName = lastMessage.event;
+        
+        // シナリオサービスから画像情報を取得
+        const scenarioBackground = await scenarioService.getBackground(eventName);
+        const scenarioCharacter = await scenarioService.getCharacter(eventName);
+        
+        // シナリオ定義に従って背景を変更またはassetManagerのイベントベース切り替え
+        if (scenarioBackground && assetManager.hasBackground(scenarioBackground)) {
+          const backgroundUrl = assetManager.getBackground(scenarioBackground);
+          if (backgroundUrl) setBackground(backgroundUrl);
+        } else {
+          // assetManagerのイベント解決機能を使用
+          const eventAssets = assetManager.resolveAssetsByEvent(eventName);
+          if (eventAssets.background) {
+            setBackground(eventAssets.background);
+          }
+        }
+        
+        // シナリオ定義に従ってキャラクターを変更またはassetManagerのイベントベース切り替え
+        if (scenarioCharacter !== null) {
+          if (scenarioCharacter === '' || scenarioCharacter === 'none') {
+            setCharacterImage(''); // 立ち絵を非表示
+          } else if (assetManager.hasCharacter(scenarioCharacter)) {
+            const characterUrl = assetManager.getCharacter(scenarioCharacter);
+            if (characterUrl) setCharacterImage(characterUrl);
+          }
+        } else {
+          // assetManagerのイベント解決機能を使用
+          const eventAssets = assetManager.resolveAssetsByEvent(eventName);
+          if (eventAssets.character !== undefined) {
+            setCharacterImage(eventAssets.character);
+          }
+        }
       }
+      
+      // 話者に応じたキャラクター表示（assetManagerの話者解決機能を使用）
+      if (lastMessage?.role === 'model' && !lastMessage.event) {
+        const speakerCharacter = assetManager.resolveCharacterBySpeaker(lastMessage.speaker || '');
+        if (speakerCharacter !== null) {
+          setCharacterImage(speakerCharacter);
+        }
+      }
+    };
 
-      // 話者に応じたキャラクター表示
-      switch(lastMessage.speaker?.toLowerCase()){
-        case 'akira':
-            setCharacterImage(IMAGE_ASSETS.characters.akira);
-            break;
-        case 'ナレーター':
-        case '謎の声':
-        case '???':
-             setCharacterImage(''); // 立ち絵を非表示
-             break;
-        default:
-             // Keep the current character or set to default if needed
-             // setCharacterImage(IMAGE_ASSETS.characters.default);
-             break;
-      }
-    }
+    handleImageChange();
   }, [lastMessage]);
 
   return (
@@ -83,6 +99,7 @@ export default function App() {
           onSettingsClick={() => setSettingsOpen(true)}
           onSaveClick={saveGame}
           onLoadClick={loadGame}
+          onBacklogClick={() => setBacklogOpen(true)}
           isSummarizing={state.isSummarizing}
           isMemoryInitializing={state.isMemoryInitializing}
           error={state.error}
@@ -93,7 +110,7 @@ export default function App() {
         {/* 下部UIエリア */}
         <footer className="relative z-10">
             <div className="h-64 mx-auto max-w-4xl bg-black bg-opacity-75 border-2 border-gray-700 rounded-t-lg backdrop-blur-sm">
-                <MessageWindow message={lastMessage} isLoading={state.isLoading} />
+                <MessageWindow message={lastMessage} isLoading={state.isLoading} onRetry={handleRetry} />
             </div>
             <div className="mx-auto max-w-4xl">
                  <InputBar onSend={handleSendMessage} isLoading={state.isLoading} />
@@ -107,6 +124,13 @@ export default function App() {
         onClose={() => setSettingsOpen(false)} 
         settings={state.settings}
         onSettingsChange={updateSettings}
+      />
+
+      {/* バックログパネル */}
+      <BacklogPanel 
+        isOpen={isBacklogOpen}
+        onClose={() => setBacklogOpen(false)}
+        messages={state.messages}
       />
     </div>
   );
