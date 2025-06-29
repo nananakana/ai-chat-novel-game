@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage } from '../types';
+import { LIGHT_THEME_COLORS } from '../constants';
 
 interface MessageWindowProps {
   message: ChatMessage | null;
@@ -49,7 +50,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ message, isLoading
   return (
     <div className="relative h-full p-6 flex flex-col justify-end">
         {currentSpeaker && (
-          <div className="absolute top-0 left-0 -mt-5 ml-8 px-4 py-1 bg-gray-800 border border-gray-600 rounded-t-lg text-lg font-bold">
+          <div className={`absolute top-0 left-0 -mt-5 ml-8 px-4 py-1 ${LIGHT_THEME_COLORS.background.secondary} border ${LIGHT_THEME_COLORS.border.accent} rounded-t-lg text-lg font-bold ${LIGHT_THEME_COLORS.text.primary}`}>
             {currentSpeaker}
           </div>
         )}
@@ -59,7 +60,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ message, isLoading
           <div className="absolute top-0 right-0 -mt-3 mr-4">
             <button
               onClick={onRetry}
-              className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-full transition-colors flex items-center gap-1"
+              className={`px-3 py-1 ${LIGHT_THEME_COLORS.button.warning.bg} ${LIGHT_THEME_COLORS.button.warning.hover} ${LIGHT_THEME_COLORS.button.warning.text} text-sm rounded-full transition-colors flex items-center gap-1 shadow-md`}
               title="この応答をやり直す"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,7 +71,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ message, isLoading
           </div>
         )}
         
-        <p className="text-xl leading-relaxed whitespace-pre-wrap">
+        <p className={`text-xl leading-relaxed whitespace-pre-wrap ${LIGHT_THEME_COLORS.text.primary}`}>
           {displayedText || (!message ? '物語が始まるのを待っています...' : '')}
         </p>
     </div>

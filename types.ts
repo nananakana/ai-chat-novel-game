@@ -17,6 +17,23 @@ export interface GameSettings {
   showCost: boolean;
 }
 
+// エディタ関連の型定義
+export interface CustomCharacter {
+  id: string;
+  name: string;
+  aliases: string[];  // エイリアス（カンマ区切りで入力）
+  imageUrl: string;
+  isProtagonist?: boolean;  // 主人公フラグ
+}
+
+export interface CustomWorldSetting {
+  title: string;
+  genre: string;
+  setting: string;
+  mainCharacter: string;
+  customPrompt?: string;  // 追加のカスタムプロンプト
+}
+
 export interface GameState {
   messages: ChatMessage[];
   settings: GameSettings;
@@ -28,4 +45,18 @@ export interface GameState {
   error: string | null;
   lastTriggeredEvent: string | null;
   pendingScenarioPrompt: string | null;
+  // エディタ機能用の状態
+  customWorldSetting?: CustomWorldSetting;
+  customCharacters: CustomCharacter[];
+  unlockedGalleryItems: GalleryItem[];
+}
+
+// ギャラリー関連の型定義
+export interface GalleryItem {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  eventName: string;
+  unlockedAt: string;  // ISO timestamp
 }

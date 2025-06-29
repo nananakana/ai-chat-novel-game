@@ -7,6 +7,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { BacklogPanel } from './components/BacklogPanel';
 import { scenarioService } from './services/scenarioService';
 import { assetManager } from './services/assetManager';
+import { LIGHT_THEME_COLORS } from './constants';
 
 
 export default function App() {
@@ -71,14 +72,14 @@ export default function App() {
   }, [lastMessage]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-gray-900 text-white select-none font-sans">
+    <div className={`relative w-screen h-screen overflow-hidden ${LIGHT_THEME_COLORS.background.primary} ${LIGHT_THEME_COLORS.text.primary} select-none font-sans`}>
       {/* 背景レイヤー */}
       <div 
         className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
         style={{ backgroundImage: `url(${background})` }}
         key={background} // keyの変更でCSS Transitionをトリガー
       ></div>
-      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+      <div className={`absolute inset-0 ${LIGHT_THEME_COLORS.background.overlay}`}></div>
 
       {/* キャラクターレイヤー */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-5/6 w-1/2 flex items-end justify-center">
@@ -109,7 +110,7 @@ export default function App() {
 
         {/* 下部UIエリア */}
         <footer className="relative z-10">
-            <div className="h-64 mx-auto max-w-4xl bg-black bg-opacity-75 border-2 border-gray-700 rounded-t-lg backdrop-blur-sm">
+            <div className={`h-64 mx-auto max-w-4xl ${LIGHT_THEME_COLORS.background.panel} bg-opacity-90 border-2 ${LIGHT_THEME_COLORS.border.primary} rounded-t-lg backdrop-blur-sm shadow-lg`}>
                 <MessageWindow message={lastMessage} isLoading={state.isLoading} onRetry={handleRetry} />
             </div>
             <div className="mx-auto max-w-4xl">

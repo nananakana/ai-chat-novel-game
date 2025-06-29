@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SendIcon } from './icons/Icons';
 import { ThinkingIndicator } from './ThinkingIndicator';
+import { LIGHT_THEME_COLORS } from '../constants';
 
 interface InputBarProps {
   onSend: (text: string) => void;
@@ -19,7 +20,7 @@ export const InputBar: React.FC<InputBarProps> = ({ onSend, isLoading }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center p-1 bg-gray-900 border-t-2 border-gray-700">
+    <form onSubmit={handleSubmit} className={`flex items-center p-1 ${LIGHT_THEME_COLORS.background.panel} border-t-2 ${LIGHT_THEME_COLORS.border.primary}`}>
       {isLoading ? (
           <ThinkingIndicator />
       ) : (
@@ -29,7 +30,7 @@ export const InputBar: React.FC<InputBarProps> = ({ onSend, isLoading }) => {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="どうする？"
-            className="flex-grow bg-transparent text-white placeholder-gray-500 focus:outline-none px-4 py-2 text-lg"
+            className={`flex-grow bg-transparent ${LIGHT_THEME_COLORS.text.primary} placeholder-slate-400 focus:outline-none px-4 py-2 text-lg`}
             disabled={isLoading}
             autoFocus
             />
@@ -37,7 +38,7 @@ export const InputBar: React.FC<InputBarProps> = ({ onSend, isLoading }) => {
             type="submit"
             aria-label="Send"
             disabled={isLoading || !text.trim()}
-            className="p-3 text-white rounded-full transition-colors disabled:text-gray-600 enabled:hover:bg-indigo-600"
+            className={`p-3 ${LIGHT_THEME_COLORS.button.primary.text} rounded-full transition-colors disabled:${LIGHT_THEME_COLORS.text.light} enabled:${LIGHT_THEME_COLORS.button.primary.hover}`}
             >
                 <SendIcon />
             </button>
