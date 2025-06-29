@@ -102,6 +102,30 @@ class AssetManager {
     }
   }
 
+  // 参考コード互換用 - キャラクター画像取得
+  getCharacterImage(speaker: string, characters: any[]): string | null {
+    if (!speaker) return null;
+    
+    // charactersが配列の場合の処理
+    if (Array.isArray(characters)) {
+      const char = characters.find(c => 
+        c.name === speaker || 
+        c.alias?.includes(speaker?.toLowerCase()) ||
+        c.aliases?.includes(speaker?.toLowerCase())
+      );
+      return char ? char.image || char.imageUrl : null;
+    }
+    
+    // フォールバック - 直接的な解決
+    return this.resolveCharacterBySpeaker(speaker);
+  }
+
+  // 参考コード互換用 - 主人公取得
+  getProtagonist(characters: any[]): any | undefined {
+    if (!Array.isArray(characters)) return undefined;
+    return characters.find(c => c.isProtagonist);
+  }
+
   // 新しいアセットを動的に追加
   addBackground(key: string, url: string): void {
     this.assets.backgrounds[key] = url;

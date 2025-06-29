@@ -23,8 +23,19 @@ const App = () => {
   // 簡化された画像管理
   useEffect(() => {
     if (lastMessage?.role === 'model' && lastMessage.speaker) {
-      const img = assetManager.getCharacterImage(lastMessage.speaker, state.settings?.characters || []);
-      setCharacterImage(img || '');
+      // 安全な画像取得処理
+      try {
+        let img = null;
+        if (assetManager.getCharacterImage) {
+          img = assetManager.getCharacterImage(lastMessage.speaker, state.settings?.characters || []);
+        } else if (assetManager.resolveCharacterBySpeaker) {
+          img = assetManager.resolveCharacterBySpeaker(lastMessage.speaker);
+        }
+        setCharacterImage(img || '');
+      } catch (e) {
+        console.warn('Character image resolution failed:', e);
+        setCharacterImage('');
+      }
     }
   }, [lastMessage, state.settings]);
 
