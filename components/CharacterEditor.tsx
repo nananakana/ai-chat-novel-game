@@ -16,8 +16,8 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
 }) => {
   const [characters, setCharacters] = useState(() => {
     return settings?.characters || [
-      { id: '1', name: '主人公', alias: ['protagonist', 'default', 'プレイヤー'], image: 'https://placehold.co/800x1200/e0e7ff/1e3a8a?text=Protagonist', isProtagonist: true, isDisplayed: false },
-      { id: '2', name: 'アキラ', alias: ['akira'], image: 'https://placehold.co/800x1200/dbeafe/1e3a8a?text=Akira', isProtagonist: false, isDisplayed: true }
+      { id: '1', name: '主人公', alias: ['protagonist', 'default', 'プレイヤー'], image: 'https://placehold.co/800x1200/e0e7ff/1e3a8a?text=Protagonist', isProtagonist: true, isDisplayed: false, profile: '' },
+      { id: '2', name: 'アキラ', alias: ['akira'], image: 'https://placehold.co/800x1200/dbeafe/1e3a8a?text=Akira', isProtagonist: false, isDisplayed: true, profile: '冷静沈着だが、仲間思いの一面も。古代文明の謎を追っている。' }
     ];
   });
 
@@ -36,7 +36,8 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
       alias: [],
       image: '',
       isProtagonist: false,
-      isDisplayed: false
+      isDisplayed: false,
+      profile: ''
     };
     setCharacters([...characters, newCharacter]);
   };
@@ -217,6 +218,21 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
                       e.target.value = '';
                     }
                   }
+                })
+              ),
+              
+              React.createElement('div', {
+                className: 'mt-4'
+              },
+                React.createElement('label', {
+                  className: 'block text-sm font-medium text-slate-700 mb-2'
+                }, 'キャラクターの性格・設定'),
+                React.createElement('textarea', {
+                  value: character.profile || '',
+                  onChange: e => updateCharacter(character.id, 'profile', e.target.value),
+                  placeholder: 'このキャラクターの性格、背景設定、口調などを記述してください...',
+                  className: 'w-full p-3 border border-slate-300 rounded-md h-24 resize-none',
+                  rows: 3
                 })
               ),
               

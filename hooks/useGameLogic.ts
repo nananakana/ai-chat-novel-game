@@ -213,28 +213,26 @@ const createGamePrompt = (history, settings) => {
   
   // 登場キャラクター一覧を作成
   const characterList = settings.characters 
-    ? settings.characters.map(char => `- ${char.name} (別名: ${char.alias?.join(', ') || 'なし'})`).join('\n')
+    ? settings.characters.map(char => {
+        let charDesc = `- ${char.name} (別名: ${char.alias?.join(', ') || 'なし'})`;
+        if (char.profile && char.profile.trim()) {
+          charDesc += `\n  - 性格・設定: ${char.profile.trim()}`;
+        }
+        return charDesc;
+      }).join('\n')
     : '- 主人公\n- ナレーター';
   
-  // カスタムプロンプトテンプレートが設定されている場合はそれを使用
-  if (settings.systemPromptTemplate) {
-    return settings.systemPromptTemplate
-      .replace('{worldPrompt}', settings.worldPrompt || 'シンプルなファンタジー世界')
-      .replace('{characterList}', characterList)
-      .replace('{conversationText}', conversationText);
-  }
-  
-  // デフォルトプロンプト
-  return `あなたは卓越したインタラクティブノベルの語り手（ゲームマスター）です。プレイヤーの行動にリアルタイムで応答し、物語を生成してください。
+  // システムプロンプトテンプレートが設定されている場合はそれを使用、未設定の場合はデフォルト
+  const template = settings.systemPromptTemplate || `あなたは卓越したインタラクティブノベルの語り手（ゲームマスター）です。プレイヤーの行動にリアルタイムで応答し、物語を生成してください。
 
 ### 世界観
-${settings.worldPrompt || 'シンプルなファンタジー世界'}
+{worldPrompt}
 
 ### 登場キャラクター
-${characterList}
+{characterList}
 
 ### 直近の会話
-${conversationText}
+{conversationText}
 
 ### 特別な指示
 - あなたは、常に入力者である『プレイヤー』自身を物語の『主人公』として扱います。常に主人公の視点から物語を描写し、『君』や『あなた』といった二人称で直接語りかけてください。
@@ -275,6 +273,12 @@ ${conversationText}
     "scene_characters": ["ニック", "アキラ"]
   }
 ]`;
+
+  // プレースホルダーを実際の値に置換
+  return template
+    .replace('{worldPrompt}', settings.worldPrompt || 'シンプルなファンタジー世界')
+    .replace('{characterList}', characterList)
+    .replace('{conversationText}', conversationText);
 };
 
 // AIレスポンスパーサー（配列専用 - インタラクティブ会話劇対応）
@@ -439,6 +443,12 @@ export const useGameLogic = () => {
         
         // まだメッセージが残っている場合は次のメッセージを予約
         if (remainingMessages.length > 0) {
+          // 動的な待ち時間を計算: 基本待ち時間 + 文字数 × 1文字あたりの追加時間
+          const baseDelay = 1200; // 基本待ち時間（ms）
+          const perCharDelay = 50; // 1文字あたりの追加時間（ms）
+          const messageLength = nextMessage.text ? nextMessage.text.length : 0;
+          const dynamicDelay = baseDelay + (messageLength * perCharDelay);
+          
           setTimeout(() => {
             // 状態を更新してキューを進める
             dispatch({ type: 'QUEUE_PROCESSING_COMPLETE' });
@@ -451,7 +461,7 @@ export const useGameLogic = () => {
                 cost: 0
               }
             });
-          }, 1500); // 1.5秒間隔
+          }, dynamicDelay); // 文字数に応じた動的間隔
         } else {
           // 全てのメッセージを処理完了
           dispatch({ type: 'QUEUE_PROCESSING_COMPLETE' });
