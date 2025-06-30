@@ -250,42 +250,46 @@ ${conversationText}
 例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": "show_character:アキラ", "scene_characters": ["アキラ"]}`;
 };
 
-// AIレスポンスパーサー（配列レスポンス対応）
+// AIレスポンスパーサー（配列・単一オブジェクト両対応）
 const parseAIResponse = (text) => {
+  // 1. まず、JSON配列を探す
   try {
-    // JSON配列の抽出を試みる
     const arrayMatch = text.match(/\[.*?\]/s);
     if (arrayMatch) {
       const parsed = JSON.parse(arrayMatch[0]);
-      if (Array.isArray(parsed)) {
+      if (Array.isArray(parsed) && parsed.length > 0) {
         // 配列の場合は最初の要素を返し、残りは配列として保存
         const firstMessage = parsed[0];
         return {
           speaker: firstMessage.speaker || 'ナレーター',
-          text: firstMessage.text || text,
+          text: firstMessage.text || '...',
           event: firstMessage.event || null,
           scene_characters: firstMessage.scene_characters || [],
           additional_messages: parsed.slice(1) // 追加メッセージを保存
         };
       }
     }
-    
-    // 単一JSONオブジェクトの抽出を試みる
-    const jsonMatch = text.match(/\{.*?\}/s);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
+  } catch (e) {
+    console.warn('JSON配列のパースに失敗:', e);
+  }
+  
+  // 2. 次に、単一のJSONオブジェクトを探す
+  try {
+    const objectMatch = text.match(/\{.*?\}/s);
+    if (objectMatch) {
+      const parsed = JSON.parse(objectMatch[0]);
       return {
         speaker: parsed.speaker || 'ナレーター',
-        text: parsed.text || text,
+        text: parsed.text || '...',
         event: parsed.event || null,
         scene_characters: parsed.scene_characters || []
       };
     }
   } catch (e) {
-    console.warn('JSONパースに失敗、テキストとして処理:', e);
+    console.warn('JSON単一オブジェクトのパースに失敗:', e);
   }
   
-  // JSONパースに失敗した場合はプレーンテキストとして扱う
+  // 3. どちらでもない場合、プレーンテキストとして扱う
   return {
     speaker: 'ナレーター',
     text: text.trim(),
