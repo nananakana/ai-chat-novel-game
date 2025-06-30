@@ -252,37 +252,42 @@ ${conversationText}
 例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": "show_character:アキラ", "scene_characters": ["アキラ"]}`;
 };
 
-// AIレスポンスパーサー（配列・単一オブジェクト両対応）
+// AIレスポンスパーサー（超堅牢化 - Markdown対応）
 const parseAIResponse = (text) => {
-  // 1. まず、JSON配列を探す
+  let jsonText = text.trim();
+
+  // ステップ1: MarkdownコードブロックからJSON部分を抽出
+  const markdownMatch = jsonText.match(/```json\n([\s\S]*?)\n```/);
+  if (markdownMatch && markdownMatch[1]) {
+    jsonText = markdownMatch[1];
+  }
+
+  // ステップ2: JSON配列としてパースを試みる
   try {
-    const arrayMatch = text.match(/\[.*?\]/s);
-    if (arrayMatch) {
-      const parsed = JSON.parse(arrayMatch[0]);
+    if (jsonText.startsWith('[')) {
+      const parsed = JSON.parse(jsonText);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // 配列の場合は最初の要素を返し、残りは配列として保存
         const firstMessage = parsed[0];
         return {
           speaker: firstMessage.speaker || 'ナレーター',
-          text: firstMessage.text || '...',
+          text: firstMessage.text || '', // '...'のフォールバックを削除
           event: firstMessage.event || null,
           scene_characters: firstMessage.scene_characters || [],
-          additional_messages: parsed.slice(1) // 追加メッセージを保存
+          additional_messages: parsed.slice(1)
         };
       }
     }
   } catch (e) {
     console.warn('JSON配列のパースに失敗:', e);
   }
-  
-  // 2. 次に、単一のJSONオブジェクトを探す
+
+  // ステップ3: 単一JSONオブジェクトとしてパースを試みる
   try {
-    const objectMatch = text.match(/\{.*?\}/s);
-    if (objectMatch) {
-      const parsed = JSON.parse(objectMatch[0]);
+    if (jsonText.startsWith('{')) {
+      const parsed = JSON.parse(jsonText);
       return {
         speaker: parsed.speaker || 'ナレーター',
-        text: parsed.text || '...',
+        text: parsed.text || '', // '...'のフォールバックを削除
         event: parsed.event || null,
         scene_characters: parsed.scene_characters || []
       };
@@ -290,11 +295,11 @@ const parseAIResponse = (text) => {
   } catch (e) {
     console.warn('JSON単一オブジェクトのパースに失敗:', e);
   }
-  
-  // 3. どちらでもない場合、プレーンテキストとして扱う
+
+  // ステップ4: 最終フォールバック
   return {
     speaker: 'ナレーター',
-    text: text.trim(),
+    text: text, // 元のテキスト全体を返す
     event: null,
     scene_characters: []
   };
