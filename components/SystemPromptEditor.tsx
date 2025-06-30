@@ -27,16 +27,19 @@ export const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
 {conversationText}
 
 ### 特別な指示
-- キャラクターを登場させる場合は、eventフィールドに "show_character:キャラクター名" を設定してください
-- キャラクターを退場させる場合は、eventフィールドに "hide_character:キャラクター名" を設定してください
-- 背景を変更する場合は、eventフィールドに "change_background:背景の説明" を設定してください
+- あなたは、常に入力者である『プレイヤー』自身を物語の『主人公』として扱います。常に主人公の視点から物語を描写し、『君』や『あなた』といった二人称で直接語りかけてください。
+- 場面にいるキャラクター同士で、自然な会話（掛け合い）を発生させることができます。ただし、会話が長くなりすぎず、必ず主人公が会話の中心にいるか、主人公の行動を促す形で物語が進行するようにしてください。
+- 場面にいる全キャラクターの名前を、必ず\`scene_characters\`フィールドに配列形式で報告してください。誰もいない場合は空の配列\`[]\`を返します。
+- キャラクターを登場させる場合は、\`event\`フィールドに "show_character:キャラクター名" を設定してください。
+- キャラクターを退場させる場合は、\`event\`フィールドに "hide_character:キャラクター名" を設定してください。
+- 背景を変更する場合は、\`event\`フィールドに "change_background:背景名" を設定してください。
 
 ### 出力形式
-以下のJSON形式で物語の続きを出力してください：
-{"speaker": "話者名", "text": "生成したセリフや状況説明", "event": "イベント名またはnull"}
+以下のJSON形式で物語の続きを厳密に出力してください：
+{"speaker": "話者名", "text": "生成したセリフや状況説明", "event": "イベント名またはnull", "scene_characters": ["キャラクター名1", "キャラクター名2"]}
 
-例: {"speaker": "ナレーター", "text": "目の前には巨大な扉が立ちはだかっている。", "event": null}
-例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": "show_character:アキラ"}`;
+例: {"speaker": "ナレーター", "text": "目の前には巨大な扉が立ちはだかっている。", "event": null, "scene_characters": []}
+例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": "show_character:アキラ", "scene_characters": ["アキラ"]}`;
   });
 
   useEffect(() => {
@@ -67,16 +70,19 @@ export const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
 {conversationText}
 
 ### 特別な指示
-- キャラクターを登場させる場合は、eventフィールドに "show_character:キャラクター名" を設定してください
-- キャラクターを退場させる場合は、eventフィールドに "hide_character:キャラクター名" を設定してください
-- 背景を変更する場合は、eventフィールドに "change_background:背景の説明" を設定してください
+- あなたは、常に入力者である『プレイヤー』自身を物語の『主人公』として扱います。常に主人公の視点から物語を描写し、『君』や『あなた』といった二人称で直接語りかけてください。
+- 場面にいるキャラクター同士で、自然な会話（掛け合い）を発生させることができます。ただし、会話が長くなりすぎず、必ず主人公が会話の中心にいるか、主人公の行動を促す形で物語が進行するようにしてください。
+- 場面にいる全キャラクターの名前を、必ず\`scene_characters\`フィールドに配列形式で報告してください。誰もいない場合は空の配列\`[]\`を返します。
+- キャラクターを登場させる場合は、\`event\`フィールドに "show_character:キャラクター名" を設定してください。
+- キャラクターを退場させる場合は、\`event\`フィールドに "hide_character:キャラクター名" を設定してください。
+- 背景を変更する場合は、\`event\`フィールドに "change_background:背景名" を設定してください。
 
 ### 出力形式
-以下のJSON形式で物語の続きを出力してください：
-{"speaker": "話者名", "text": "生成したセリフや状況説明", "event": "イベント名またはnull"}
+以下のJSON形式で物語の続きを厳密に出力してください：
+{"speaker": "話者名", "text": "生成したセリフや状況説明", "event": "イベント名またはnull", "scene_characters": ["キャラクター名1", "キャラクター名2"]}
 
-例: {"speaker": "ナレーター", "text": "目の前には巨大な扉が立ちはだかっている。", "event": null}
-例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": "show_character:アキラ"}`;
+例: {"speaker": "ナレーター", "text": "目の前には巨大な扉が立ちはだかっている。", "event": null, "scene_characters": []}
+例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": "show_character:アキラ", "scene_characters": ["アキラ"]}`;
       
       setSystemPromptTemplate(defaultTemplate);
     }

@@ -43,7 +43,7 @@ const SYSTEM_PROMPT_TEMPLATE = `あなたは卓越したインタラクティブ
 const INITIAL_SETTINGS = { 
   geminiApiKey: '', 
   openaiApiKey: '', 
-  aiModel: 'gemini-flash', 
+  aiModel: 'gemini-1.5-flash', 
   showCost: true, 
   worldPrompt: DEFAULT_WORLD_PROMPT, 
   characters: DEFAULT_CHARACTERS 
@@ -66,7 +66,17 @@ const INITIAL_STATE = {
   error: null, 
   lastTriggeredEvent: null, 
   pendingScenarioPrompt: null, 
-  unlockedGalleryItems: [],
+  unlockedGalleryItems: [
+    {
+      id: 'initial_cg',
+      title: '🌅 物語の始まり',
+      description: 'あなたは苔むした遺跡の前で目を覚ました。自分が誰で、なぜここにいるのか思い出せない。',
+      imageUrl: 'https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=800&h=600&auto=format&fit=crop&text=ancient+ruins+fantasy+misty',
+      unlockedAt: new Date().toISOString(),
+      eventName: 'game_start',
+      speaker: 'ナレーター'
+    }
+  ],
 };
 
 const SHORT_TERM_MEMORY_TURNS = 5;

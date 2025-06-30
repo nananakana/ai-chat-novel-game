@@ -12,6 +12,7 @@ import { CharacterEditor } from './components/CharacterEditor';
 import { SaveLoadPanel } from './components/SaveLoadPanel';
 import { SystemPromptEditor } from './components/SystemPromptEditor';
 import { BackgroundEditor } from './components/BackgroundEditor';
+import { EventCGEditor } from './components/EventCGEditor';
 import { assetManager } from './services/assetManager';
 
 const App = () => {
@@ -25,8 +26,10 @@ const App = () => {
   const [saveLoadMode, setSaveLoadMode] = useState('save');
   const [isSystemPromptEditorOpen, setSystemPromptEditorOpen] = useState(false);
   const [isBackgroundEditorOpen, setBackgroundEditorOpen] = useState(false);
+  const [isEventCGEditorOpen, setEventCGEditorOpen] = useState(false);
   const [isWindowVisible, setWindowVisible] = useState(true);
   const [background, setBackground] = useState('https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=2070&auto=format&fit=crop');
+  const [backgroundLoading, setBackgroundLoading] = useState(false);
   const [visibleCharacters, setVisibleCharacters] = useState([]);
   const [activeCharacters, setActiveCharacters] = useState([]);
 
@@ -68,7 +71,7 @@ const App = () => {
       setActiveCharacters(newActiveCharacters.slice(0, 3));
     }
     
-    // 背景変更イベント処理
+    // 背景変更イベント処理（プリロード・クロスフェード対応）
     if (lastMessage.event && lastMessage.event.startsWith('change_background:')) {
       const backgroundName = lastMessage.event.replace('change_background:', '').trim();
       
@@ -77,26 +80,52 @@ const App = () => {
         bg.name === backgroundName || bg.name.toLowerCase().includes(backgroundName.toLowerCase())
       );
       
+      let targetUrl = '';
       if (backgroundData && backgroundData.url) {
-        setBackground(backgroundData.url);
+        targetUrl = backgroundData.url;
       } else {
         // フォールバック: 説明ベースの背景生成
-        const newBackgroundUrl = `https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&text=${encodeURIComponent(backgroundName)}`;
-        setBackground(newBackgroundUrl);
+        targetUrl = `https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&text=${encodeURIComponent(backgroundName)}`;
       }
+      
+      // 画像のプリロード
+      setBackgroundLoading(true);
+      const img = new Image();
+      img.onload = () => {
+        setBackground(targetUrl);
+        setBackgroundLoading(false);
+      };
+      img.onerror = () => {
+        console.warn('Failed to load background:', targetUrl);
+        setBackgroundLoading(false);
+      };
+      img.src = targetUrl;
     }
   }, [lastMessage, state.settings?.characters, state.settings?.backgrounds]);
 
   return React.createElement('div', { 
     className: 'relative w-screen h-screen overflow-hidden bg-slate-50 text-slate-800 select-none' 
   },
-    // 背景レイヤー
+    // 背景レイヤー（プリロード・クロスフェード対応）
     React.createElement('div', { 
-      className: 'absolute inset-0 bg-cover bg-center transition-all duration-1000',
+      className: `absolute inset-0 bg-cover bg-center transition-all duration-1000 ${backgroundLoading ? 'opacity-50' : 'opacity-100'}`,
       style: { backgroundImage: `url(${background})` },
       key: background
     }),
     React.createElement('div', { className: 'absolute inset-0 bg-white bg-opacity-10' }),
+    
+    // ローディング表示
+    backgroundLoading && React.createElement('div', {
+      className: 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 z-20'
+    },
+      React.createElement('div', {
+        className: 'bg-white rounded-lg p-4 shadow-lg'
+      },
+        React.createElement('p', {
+          className: 'text-slate-700'
+        }, '背景を読み込み中...')
+      )
+    ),
     
     // キャラクターレイヤー（動的ポジション対応・最適サイジング）
     activeCharacters.length > 0 && React.createElement('div', {
@@ -180,7 +209,8 @@ const App = () => {
       onEditCharacters: () => setCharacterEditorOpen(true),
       onEditWorld: () => setWorldEditorOpen(true),
       onEditSystemPrompt: () => setSystemPromptEditorOpen(true),
-      onEditBackgrounds: () => setBackgroundEditorOpen(true)
+      onEditBackgrounds: () => setBackgroundEditorOpen(true),
+      onEditEventCGs: () => setEventCGEditorOpen(true)
     }),
     React.createElement(BacklogPanel, { 
       isOpen: isBacklogOpen,
@@ -228,6 +258,12 @@ const App = () => {
     React.createElement(BackgroundEditor, {
       isOpen: isBackgroundEditorOpen,
       onClose: () => setBackgroundEditorOpen(false),
+      settings: state.settings,
+      onSettingsChange: updateSettings
+    }),
+    React.createElement(EventCGEditor, {
+      isOpen: isEventCGEditorOpen,
+      onClose: () => setEventCGEditorOpen(false),
       settings: state.settings,
       onSettingsChange: updateSettings
     })

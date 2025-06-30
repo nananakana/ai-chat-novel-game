@@ -10,6 +10,7 @@ interface SettingsPanelProps {
   onEditWorld: () => void;
   onEditSystemPrompt: () => void;
   onEditBackgrounds: () => void;
+  onEditEventCGs: () => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
@@ -20,7 +21,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onEditCharacters,
   onEditWorld,
   onEditSystemPrompt,
-  onEditBackgrounds
+  onEditBackgrounds,
+  onEditEventCGs
 }) => {
   if (!isOpen) return null;
 
@@ -68,7 +70,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             React.createElement('button', {
               onClick: onEditBackgrounds,
               className: 'p-3 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 text-left'
-            }, '🌅 背景の編集')
+            }, '🌅 背景の編集'),
+            React.createElement('button', {
+              onClick: onEditEventCGs,
+              className: 'p-3 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 text-left'
+            }, '🎨 イベントCGの編集')
           )
         ),
         React.createElement('div', null,
@@ -87,19 +93,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           ),
           React.createElement('select', {
             id: 'aiModel',
-            value: settings?.aiModel || 'gemini-flash',
+            value: settings?.aiModel || 'gemini-1.5-flash',
             onChange: e => onSettingsChange({ aiModel: e.target.value }),
             className: 'w-full p-2 bg-white border border-slate-300 rounded-md mb-4'
           },
             React.createElement('optgroup', { label: '🟢 Gemini Models' },
-              React.createElement('option', { value: 'gemini-flash' }, 'Gemini 1.5 Flash (高速・安価)'),
-              React.createElement('option', { value: 'gemini-pro' }, 'Gemini 1.5 Pro (バランス)'),
-              React.createElement('option', { value: 'gemini-ultra' }, 'Gemini Ultra (高性能・高価)')
+              React.createElement('option', { value: 'gemini-1.5-flash' }, 'Gemini 1.5 Flash (高速・安価)'),
+              React.createElement('option', { value: 'gemini-1.5-pro' }, 'Gemini 1.5 Pro (バランス)'),
+              React.createElement('option', { value: 'gemini-2.5-pro' }, 'Gemini 2.5 Pro (高性能)')
             ),
             React.createElement('optgroup', { label: '🔵 ChatGPT Models' },
               React.createElement('option', { value: 'gpt-4o-mini' }, 'GPT-4o Mini (高速・安価)'),
               React.createElement('option', { value: 'gpt-4o' }, 'GPT-4o (バランス)'),
-              React.createElement('option', { value: 'gpt-4-turbo' }, 'GPT-4 Turbo (高性能・高価)')
+              React.createElement('option', { value: 'gpt-4-turbo' }, 'GPT-4 Turbo (高性能)')
             ),
             React.createElement('optgroup', { label: '🟡 その他' },
               React.createElement('option', { value: 'dummy' }, 'Dummy AI (テスト用)')
