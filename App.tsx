@@ -71,7 +71,7 @@ const App = () => {
       setActiveCharacters(newActiveCharacters.slice(0, 3));
     }
     
-    // 背景変更イベント処理（プリロード・クロスフェード対応）
+    // 背景変更イベント処理（Promiseベース・タイムアウト対応）
     if (lastMessage.event && lastMessage.event.startsWith('change_background:')) {
       const backgroundName = lastMessage.event.replace('change_background:', '').trim();
       
@@ -88,18 +88,45 @@ const App = () => {
         targetUrl = `https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&text=${encodeURIComponent(backgroundName)}`;
       }
       
-      // 画像のプリロード
+      // Promiseベースの画像プリロード（タイムアウト付き）
       setBackgroundLoading(true);
-      const img = new Image();
-      img.onload = () => {
-        setBackground(targetUrl);
-        setBackgroundLoading(false);
+      
+      const loadBackgroundImage = (url) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          let timeoutId;
+          
+          // 10秒のタイムアウトを設定
+          timeoutId = setTimeout(() => {
+            reject(new Error('画像読み込みがタイムアウトしました'));
+          }, 10000);
+          
+          img.onload = () => {
+            clearTimeout(timeoutId);
+            resolve(url);
+          };
+          
+          img.onerror = () => {
+            clearTimeout(timeoutId);
+            reject(new Error('画像の読み込みに失敗しました'));
+          };
+          
+          img.src = url;
+        });
       };
-      img.onerror = () => {
-        console.warn('Failed to load background:', targetUrl);
-        setBackgroundLoading(false);
-      };
-      img.src = targetUrl;
+      
+      // 背景変更処理の実行
+      loadBackgroundImage(targetUrl)
+        .then((loadedUrl) => {
+          setBackground(loadedUrl);
+          setBackgroundLoading(false);
+        })
+        .catch((error) => {
+          console.warn('Background loading failed:', error.message);
+          setBackgroundLoading(false);
+          // エラーメッセージを表示するか、デフォルト背景に戻すかの処理
+          // 必要に応じてエラー状態をstateに追加可能
+        });
     }
   }, [lastMessage, state.settings?.characters, state.settings?.backgrounds]);
 

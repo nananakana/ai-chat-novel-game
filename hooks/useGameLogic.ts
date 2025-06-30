@@ -2,7 +2,7 @@
 import { useReducer, useEffect, useCallback } from 'react';
 import { INITIAL_STATE } from '../constants';
 
-// 簡素化されたReducer
+// 簡素化されたReducer（連続メッセージ対応）
 const gameReducer = (state, action) => {
   switch (action.type) {
     case 'SEND_MESSAGE_START':
@@ -24,7 +24,31 @@ const gameReducer = (state, action) => {
         ];
       }
       
+      // 連続メッセージがある場合はキューに追加
+      if (action.payload.message.additional_messages && action.payload.message.additional_messages.length > 0) {
+        newState.messageQueue = action.payload.message.additional_messages;
+        newState.isProcessingQueue = true;
+      }
+      
       return newState;
+    case 'PROCESS_QUEUE_MESSAGE':
+      const queuedMessage = {
+        id: Date.now().toString(),
+        role: 'model',
+        ...action.payload,
+        timestamp: new Date().toISOString()
+      };
+      
+      return {
+        ...state,
+        messages: [...state.messages, queuedMessage]
+      };
+    case 'QUEUE_PROCESSING_COMPLETE':
+      return {
+        ...state,
+        messageQueue: [],
+        isProcessingQueue: false
+      };
     case 'RECEIVE_RESPONSE_ERROR':
       return { ...state, isLoading: false, error: action.payload };
     case 'UPDATE_SETTINGS':
@@ -226,10 +250,27 @@ ${conversationText}
 例: {"speaker": "アキラ", "text": "こんにちは！元気だった？", "event": "show_character:アキラ", "scene_characters": ["アキラ"]}`;
 };
 
-// AIレスポンスパーサー
+// AIレスポンスパーサー（配列レスポンス対応）
 const parseAIResponse = (text) => {
   try {
-    // JSONの抽出を試みる
+    // JSON配列の抽出を試みる
+    const arrayMatch = text.match(/\[.*?\]/s);
+    if (arrayMatch) {
+      const parsed = JSON.parse(arrayMatch[0]);
+      if (Array.isArray(parsed)) {
+        // 配列の場合は最初の要素を返し、残りは配列として保存
+        const firstMessage = parsed[0];
+        return {
+          speaker: firstMessage.speaker || 'ナレーター',
+          text: firstMessage.text || text,
+          event: firstMessage.event || null,
+          scene_characters: firstMessage.scene_characters || [],
+          additional_messages: parsed.slice(1) // 追加メッセージを保存
+        };
+      }
+    }
+    
+    // 単一JSONオブジェクトの抽出を試みる
     const jsonMatch = text.match(/\{.*?\}/s);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
@@ -347,16 +388,59 @@ export const useGameLogic = () => {
         const settings = JSON.parse(savedSettings);
         return {
           ...INITIAL_STATE,
-          settings: { ...INITIAL_STATE.settings, ...settings }
+          settings: { ...INITIAL_STATE.settings, ...settings },
+          messageQueue: [], // 連続メッセージキュー
+          isProcessingQueue: false // キュー処理中フラグ
         };
       }
     } catch (e) {
       console.warn('設定の読み込みに失敗:', e);
     }
-    return INITIAL_STATE;
+    return {
+      ...INITIAL_STATE,
+      messageQueue: [],
+      isProcessingQueue: false
+    };
   };
 
   const [state, dispatch] = useReducer(gameReducer, getInitialState());
+
+  // 連続メッセージキューの処理
+  useEffect(() => {
+    if (state.isProcessingQueue && state.messageQueue && state.messageQueue.length > 0) {
+      const processNextMessage = () => {
+        const nextMessage = state.messageQueue[0];
+        const remainingMessages = state.messageQueue.slice(1);
+        
+        // メッセージを表示
+        dispatch({ type: 'PROCESS_QUEUE_MESSAGE', payload: nextMessage });
+        
+        // まだメッセージが残っている場合は次のメッセージを予約
+        if (remainingMessages.length > 0) {
+          setTimeout(() => {
+            // 状態を更新してキューを進める
+            dispatch({ type: 'QUEUE_PROCESSING_COMPLETE' });
+            dispatch({ 
+              type: 'RECEIVE_RESPONSE_SUCCESS', 
+              payload: { 
+                message: { 
+                  additional_messages: remainingMessages 
+                },
+                cost: 0
+              }
+            });
+          }, 1500); // 1.5秒間隔
+        } else {
+          // 全てのメッセージを処理完了
+          dispatch({ type: 'QUEUE_PROCESSING_COMPLETE' });
+        }
+      };
+
+      // 初回は即座に実行
+      const timer = setTimeout(processNextMessage, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [state.isProcessingQueue, state.messageQueue]);
 
   const handleSendMessage = useCallback(async (text) => {
     if (state.isLoading) return;
