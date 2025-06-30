@@ -1,4 +1,4 @@
-export type AiModel = 'gemini' | 'chatgpt' | 'gemini-cli' | 'dummy';
+export type AiModel = 'gemini-1.5-flash' | 'gemini-1.5-pro' | 'gemini-2.5-pro' | 'gpt-4o-mini' | 'gpt-4o' | 'gpt-4-turbo' | 'gemini-cli' | 'dummy';
 
 export interface ChatMessage {
   id: string;

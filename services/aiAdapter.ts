@@ -13,8 +13,12 @@ const DUMMY_RESPONSES = [
 ];
 let dummyResponseIndex = 0;
 
-const GEMINI_MODEL = 'gemini-2.5-flash-preview-04-17';
-const CHATGPT_MODEL = 'gpt-4o-mini';
+// Gemini model mapping
+const GEMINI_MODELS = {
+  'gemini-1.5-flash': 'gemini-1.5-flash-latest',
+  'gemini-1.5-pro': 'gemini-1.5-pro-latest',
+  'gemini-2.5-pro': 'gemini-2.5-flash-preview-04-17'
+};
 
 
 // Gemini CLI実行関数
@@ -152,13 +156,15 @@ export const generateResponse = async (
         let responseText: string;
 
         switch (settings.aiModel) {
-            case 'gemini':
+            case 'gemini-1.5-flash':
+            case 'gemini-1.5-pro':
+            case 'gemini-2.5-pro':
                 if (!settings.geminiApiKey) {
                     throw new Error("Gemini APIキーが設定されていません。設定画面でキーを入力してください。");
                 }
                 const geminiAi = new GoogleGenAI({ apiKey: settings.geminiApiKey });
                 const geminiResponse: GenerateContentResponse = await geminiAi.models.generateContent({
-                    model: GEMINI_MODEL,
+                    model: GEMINI_MODELS[settings.aiModel],
                     contents: prompt,
                     config: {
                         responseMimeType: "application/json",
@@ -167,7 +173,9 @@ export const generateResponse = async (
                 responseText = geminiResponse.text;
                 break;
 
-            case 'chatgpt':
+            case 'gpt-4o-mini':
+            case 'gpt-4o':
+            case 'gpt-4-turbo':
                 if (!settings.openaiApiKey) {
                     throw new Error("OpenAI APIキーが設定されていません。設定画面でキーを入力してください。");
                 }
@@ -176,7 +184,7 @@ export const generateResponse = async (
                     dangerouslyAllowBrowser: true 
                 });
                 const chatResponse = await openai.chat.completions.create({
-                    model: CHATGPT_MODEL,
+                    model: settings.aiModel, // Use the model name directly
                     messages: [
                         { role: 'system', content: prompt }
                     ],
@@ -224,24 +232,28 @@ export const summarizeHistory = async (history: ChatMessage[], settings: GameSet
         let responseText: string;
 
         switch (settings.aiModel) {
-            case 'gemini':
+            case 'gemini-1.5-flash':
+            case 'gemini-1.5-pro':
+            case 'gemini-2.5-pro':
                 if (!settings.geminiApiKey) return "Gemini APIキーが未設定のため要約できません。";
                 const geminiAi = new GoogleGenAI({ apiKey: settings.geminiApiKey });
                 const geminiResponse: GenerateContentResponse = await geminiAi.models.generateContent({
-                    model: GEMINI_MODEL,
+                    model: GEMINI_MODELS[settings.aiModel],
                     contents: prompt,
                 });
                 responseText = geminiResponse.text;
                 break;
 
-            case 'chatgpt':
+            case 'gpt-4o-mini':
+            case 'gpt-4o':
+            case 'gpt-4-turbo':
                 if (!settings.openaiApiKey) return "OpenAI APIキーが未設定のため要約できません。";
                 const openai = new OpenAI({ 
                     apiKey: settings.openaiApiKey,
                     dangerouslyAllowBrowser: true 
                 });
                 const chatResponse = await openai.chat.completions.create({
-                    model: CHATGPT_MODEL,
+                    model: settings.aiModel,
                     messages: [
                         { role: 'system', content: prompt }
                     ],

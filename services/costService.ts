@@ -22,16 +22,36 @@ class CostService {
   private readonly MONTHLY_LIMIT_KEY = 'aiGameMonthlyLimit';
   private readonly DEFAULT_MONTHLY_LIMIT = 50; // USD
 
-  // モデル別の料金設定
+  // モデル別の料金設定 (2024年12月時点の料金)
   private readonly PRICING = {
-    gemini: {
-      inputPer1K: 0.000105, // per 1K characters
-      outputPer1K: 0.000210,
-      isTokenBased: false
+    'gemini-1.5-flash': {
+      inputPer1K: 0.075 / 1000000, // $0.075 per 1M tokens
+      outputPer1K: 0.30 / 1000000, // $0.30 per 1M tokens
+      isTokenBased: true
     },
-    chatgpt: {
-      inputPer1K: 0.00015, // per 1K tokens
-      outputPer1K: 0.0006,
+    'gemini-1.5-pro': {
+      inputPer1K: 1.25 / 1000000, // $1.25 per 1M tokens
+      outputPer1K: 5.00 / 1000000, // $5.00 per 1M tokens
+      isTokenBased: true
+    },
+    'gemini-2.5-pro': {
+      inputPer1K: 2.50 / 1000000, // $2.50 per 1M tokens
+      outputPer1K: 10.00 / 1000000, // $10.00 per 1M tokens
+      isTokenBased: true
+    },
+    'gpt-4o-mini': {
+      inputPer1K: 0.15 / 1000000, // $0.15 per 1M tokens
+      outputPer1K: 0.60 / 1000000, // $0.60 per 1M tokens
+      isTokenBased: true
+    },
+    'gpt-4o': {
+      inputPer1K: 5.00 / 1000000, // $5.00 per 1M tokens
+      outputPer1K: 15.00 / 1000000, // $15.00 per 1M tokens
+      isTokenBased: true
+    },
+    'gpt-4-turbo': {
+      inputPer1K: 10.00 / 1000000, // $10.00 per 1M tokens
+      outputPer1K: 30.00 / 1000000, // $30.00 per 1M tokens
       isTokenBased: true
     },
     'gemini-cli': {
@@ -143,8 +163,12 @@ class CostService {
           totalCost: 0,
           totalRequests: 0,
           modelBreakdown: {
-            gemini: { cost: 0, requests: 0 },
-            chatgpt: { cost: 0, requests: 0 },
+            'gemini-1.5-flash': { cost: 0, requests: 0 },
+            'gemini-1.5-pro': { cost: 0, requests: 0 },
+            'gemini-2.5-pro': { cost: 0, requests: 0 },
+            'gpt-4o-mini': { cost: 0, requests: 0 },
+            'gpt-4o': { cost: 0, requests: 0 },
+            'gpt-4-turbo': { cost: 0, requests: 0 },
             'gemini-cli': { cost: 0, requests: 0 },
             dummy: { cost: 0, requests: 0 }
           }
