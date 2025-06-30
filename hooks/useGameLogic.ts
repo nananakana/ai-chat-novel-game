@@ -124,6 +124,7 @@ const generateResponse = async (history, settings) => {
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
+        console.log('--- RAW AI RESPONSE (Gemini) ---', text);
         
         // JSONレスポンスをパース
         const parsedResponse = parseAIResponse(text);
@@ -173,6 +174,7 @@ const generateResponse = async (history, settings) => {
         });
         
         const content = completion.choices[0].message.content;
+        console.log('--- RAW AI RESPONSE (OpenAI) ---', content);
         const parsedResponse = parseAIResponse(content);
         
         return {
